@@ -1,0 +1,879 @@
+StudyTales
+
+Game Design Document (Professional Expanded Edition)
+
+Version 1.0
+
+⸻
+
+1. Executive Summary
+
+StudyTales is an AI-powered educational RPG that transforms studying into a progression-based gaming experience.
+
+Players import study materials, complete AI-generated learning activities, earn rewards, collect cards, build teams, and progress through an ever-expanding ecosystem of educational content.
+
+The core philosophy is:
+
+Every minute spent studying should feel rewarding.
+
+Unlike traditional flashcard applications, StudyTales combines:
+
+* Adaptive Learning
+* AI Content Generation
+* Gacha Collection Systems
+* RPG Team Building
+* Character Interactions
+* Long-Term Progression
+
+into a single educational platform.
+
+⸻
+
+2. Vision Statement
+
+Mission
+
+Make studying feel as engaging as playing a favorite game.
+
+Long-Term Goal
+
+Become the ultimate educational companion where students voluntarily spend hours learning because the process itself is fun.
+
+⸻
+
+3. Target Audience
+
+Primary
+
+Students ages 13-25
+
+* Middle School
+* High School
+* College
+
+Secondary
+
+* Language learners
+* Self-learners
+* Professional certification students
+* Homeschool students
+
+⸻
+
+4. Design Pillars
+
+Pillar 1: Learning First
+
+Studying must always remain the most effective way to progress.
+
+⸻
+
+Pillar 2: Progression Feels Meaningful
+
+Every session contributes toward:
+
+* Coins
+* XP
+* Cards
+* Achievements
+* Collection Completion
+
+⸻
+
+Pillar 3: Personalization
+
+Every player studies different material.
+
+AI creates unique content from:
+
+* PDFs
+* Text
+* Videos
+* Notes
+
+⸻
+
+Pillar 4: Long-Term Retention
+
+The game encourages:
+
+* Daily use
+* Spaced repetition
+* Active recall
+
+⸻
+
+5. Core Gameplay Loop
+
+Study Material
+
+↓
+
+AI Processing
+
+↓
+
+Learning Games
+
+↓
+
+Rewards
+
+↓
+
+Gacha Pulls
+
+↓
+
+Stronger Collection
+
+↓
+
+More Efficient Studying
+
+↓
+
+Study More
+
+⸻
+
+6. User Journey
+
+Day 1
+
+Player uploads biology notes.
+
+AI creates:
+
+* Flashcards
+* Quiz
+* Boss Exam
+
+Player earns:
+
+* 500 Coins
+* 1 Pull
+
+Obtains:
+
+* Rare Card
+
+⸻
+
+Week 1
+
+Player:
+
+* Reaches Level 10
+* Unlocks Expeditions
+* Builds First Team
+
+⸻
+
+Month 1
+
+Player:
+
+* Owns 50+ Cards
+* Has Multiple Study Sets
+* Uses Daily Streak System
+
+⸻
+
+7. Study Material Import System
+
+Supported Formats
+
+PDFs
+
+Automatic text extraction
+
+URLs
+
+Article parsing
+
+YouTube
+
+Transcript processing
+
+Manual Text
+
+Paste directly
+
+⸻
+
+8. AI Study Engine
+
+Content Analysis
+
+The AI identifies:
+
+* Key concepts
+* Definitions
+* Relationships
+* Processes
+* Important dates
+* Vocabulary
+
+⸻
+
+9. AI Difficulty Levels
+
+Easy
+
+Recognition learning
+
+Medium
+
+Recall learning
+
+Hard
+
+Application learning
+
+Mastery
+
+Exam-level questions
+
+⸻
+
+10. Study Set System
+
+Folders
+
+→ Classes
+
+→ Units
+
+→ Study Sets
+
+Example:
+
+Science
+
+→ Biology
+
+→ Cell Structure
+
+⸻
+
+11. Quiz Battle Mode
+
+Question appears
+
+↓
+
+Player answers
+
+↓
+
+Damage dealt
+
+↓
+
+Enemy HP reduced
+
+⸻
+
+12. Flashcard Flip
+
+Traditional flashcards enhanced with:
+
+* Card Skills
+* Multipliers
+* Mastery tracking
+
+⸻
+
+13. Memory Match
+
+Match:
+
+* Terms
+* Definitions
+* Images
+* Concepts
+
+⸻
+
+14. Falling Terms
+
+Arcade mode.
+
+Terms fall from screen.
+
+Players match before timer expires.
+
+⸻
+
+15. Fill-in-the-Blank Story
+
+AI creates narrative passages.
+
+Students fill missing information.
+
+⸻
+
+16. Boss Battle Exam
+
+Major challenge mode.
+
+Represents:
+
+* Unit Tests
+* Midterms
+* Finals
+
+⸻
+
+17. Spaced Repetition
+
+Review schedule:
+
+1 Day
+
+3 Days
+
+7 Days
+
+14 Days
+
+30 Days
+
+90 Days
+
+⸻
+
+18. Currency Overview
+
+Coins
+
+Primary currency.
+
+Earned through:
+
+* Study
+* Quizzes
+* Streaks
+
+⸻
+
+19. Premium Currency (Optional Future)
+
+Study Gems
+
+Used for:
+
+* Cosmetics
+* Themes
+
+Never required for learning.
+
+⸻
+
+20. Player Levels
+
+Max Level: 200
+
+Gain XP through:
+
+* Studying
+* Missions
+* Events
+
+⸻
+
+21. Daily Missions
+
+Examples:
+
+Complete 10 Questions
+
+Review 20 Flashcards
+
+Study 30 Minutes
+
+⸻
+
+22. Weekly Missions
+
+Examples:
+
+Complete 5 Boss Battles
+
+Earn 10,000 Coins
+
+Reach 80% Accuracy
+
+⸻
+
+23. Achievement System
+
+Categories:
+
+* Study
+* Collection
+* Battle
+* Social
+* Events
+
+⸻
+
+24. Title System
+
+Examples:
+
+* Scholar
+* Quiz Master
+* Archivist
+* Genius
+* Grandmaster
+
+⸻
+
+25. Gacha System Overview
+
+Collection-focused progression.
+
+No gameplay locked behind spending.
+
+⸻
+
+26. Rarity Structure
+
+R = 70%
+
+SR = 22%
+
+SSR = 7%
+
+UR = 1%
+
+⸻
+
+27. Pity System
+
+100 Pulls
+
+Guaranteed UR
+
+⸻
+
+28. Limited Banners
+
+Seasonal Events
+
+School Themes
+
+Fantasy Themes
+
+Cross-Theme Universes
+
+⸻
+
+29. Duplicate System
+
+Duplicates become:
+
+* Character Shards
+
+Used for:
+
+* Limit Breaks
+
+⸻
+
+30. Limit Break System
+
+0★
+
+1★
+
+2★
+
+3★
+
+4★
+
+5★
+
+⸻
+
+31. Elements
+
+Logic
+
+Emotion
+
+Strength
+
+⸻
+
+32. Element Triangle
+
+Logic > Emotion
+
+Emotion > Strength
+
+Strength > Logic
+
+⸻
+
+33. Card Statistics
+
+HP
+
+Attack
+
+Defense
+
+Speed
+
+Support
+
+⸻
+
+34. Skill Categories
+
+Active Skills
+
+Passive Skills
+
+Leader Skills
+
+Support Skills
+
+⸻
+
+35. Team Building
+
+3 Main Cards
+
+3 Support Cards
+
+⸻
+
+36. Synergy System
+
+Pairs receive bonuses.
+
+Examples:
+
+Study Partners
+
+Rivals
+
+Team Members
+
+⸻
+
+37. Battle Formula
+
+Knowledge Accuracy
+
+Speed
+
+Card Power
+
+=
+
+Damage
+
+⸻
+
+38. Battle Types
+
+Practice Battle
+
+Boss Battle
+
+Challenge Battle
+
+Event Battle
+
+⸻
+
+39. AI Character Chat
+
+Modes:
+
+Study
+
+Casual
+
+Lore
+
+Roleplay-lite
+
+⸻
+
+40. Study Assistant Mode
+
+Character helps with:
+
+* Explanations
+* Summaries
+* Definitions
+
+⸻
+
+41. Voice Features
+
+Future Feature
+
+Voice interaction with study assistant.
+
+⸻
+
+42. Study Heatmap
+
+Tracks:
+
+* Daily Activity
+* Consistency
+* Streaks
+
+⸻
+
+43. Expedition System
+
+Send teams on missions.
+
+Return after:
+
+* 1 Hour
+* 4 Hours
+* 8 Hours
+* 24 Hours
+
+⸻
+
+44. Tech Tree
+
+Permanent account upgrades.
+
+Examples:
+
++5% Coins
+
++5% XP
+
+Extra Pull Fragments
+
+⸻
+
+45. Leaderboards
+
+Global
+
+Friends
+
+School
+
+Event
+
+⸻
+
+46. Social Features
+
+Future Expansion
+
+* Friend Lists
+* Shared Study Rooms
+* Co-op Challenges
+
+⸻
+
+47. Seasonal Events
+
+Halloween
+
+Winter Festival
+
+Spring Event
+
+Summer Event
+
+⸻
+
+48. Live Operations
+
+Weekly:
+
+* Missions
+* Challenges
+
+Monthly:
+
+* New Banner
+
+⸻
+
+49. Monetization Strategy
+
+Cosmetics
+
+Themes
+
+Profile Decorations
+
+Battle Effects
+
+No pay-to-win progression.
+
+⸻
+
+50. Firebase Architecture
+
+Collections:
+
+Users
+
+Cards
+
+StudySets
+
+Quizzes
+
+Questions
+
+Battles
+
+Achievements
+
+Expeditions
+
+Chats
+
+⸻
+
+51. AI Architecture
+
+Input
+
+↓
+
+Extraction
+
+↓
+
+Knowledge Mapping
+
+↓
+
+Question Generation
+
+↓
+
+Game Conversion
+
+↓
+
+Progress Tracking
+
+⸻
+
+52. Analytics
+
+Track:
+
+* Retention
+* Accuracy
+* Session Length
+* Completion Rates
+
+⸻
+
+53. Accessibility
+
+Large Text
+
+Colorblind Support
+
+Screen Reader Compatibility
+
+Reduced Motion
+
+⸻
+
+54. Mobile Experience
+
+Installable PWA
+
+Offline Review
+
+Push Notifications
+
+Haptic Feedback
+
+⸻
+
+55. MVP Scope
+
+Version 0.1
+
+Includes:
+
+* Text Import
+* Quiz Generation
+* Flashcards
+* Coins
+* Gacha
+* 30 Starter Cards
+
+⸻
+
+56. Version 1.0 Scope
+
+Includes:
+
+* Full Battle System
+* AI Chat
+* Expeditions
+* Tech Tree
+* Achievements
+
+⸻
+
+57. Version 2.0 Scope
+
+Includes:
+
+* Voice AI
+* Social Features
+* Guild System
+* PvE Events
+
+⸻
+
+58. Success Metrics
+
+Day 1 Retention: 60%
+
+Day 7 Retention: 35%
+
+Day 30 Retention: 20%
+
+Average Study Session: 25 Minutes
+
+⸻
+
+59. Risks
+
+* AI Hallucinations
+* Content Quality
+* Balance Issues
+* Excessive Grind
+* Study Burnout
+
+⸻
+
+60. Final Vision
+
+StudyTales is designed to become a platform where:
+
+Learning generates progression.
+Progression motivates learning.
+Every study session feels rewarding.
+
+This document serves as the foundation for the complete product, feature roadmap, balancing plan, UI/UX design, database architecture, and future expansion strategy.

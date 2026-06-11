@@ -1,0 +1,288 @@
+import { useState, useCallback } from "react";
+import { motion, AnimatePresence } from "motion/react";
+import { X, Star } from "lucide-react";
+import { CHARACTERS, BANNERS, type Character, type Rarity, type OwnedCard } from "../data/characters";
+import { CardImage } from "./CardImage";
+
+const RARITY_STYLES: Record<Rarity, { border: string; stars: number }> = {
+  R: { border: "border-slate-300", stars: 1 },
+  SR: { border: "border-purple-400", stars: 3 },
+  SSR: { border: "border-amber-400", stars: 4 },
+  UR: { border: "border-rose-400", stars: 5 },
+};
+
+const PULL_COST = { single: 160, ten: 1440 };
+
+function rollRarity(rates: Record<Rarity, number>): Rarity {
+  const rand = Math.random() * 100;
+  let cumulative = 0;
+  for (const [rarity, rate] of Object.entries(rates) as [Rarity, number][]) {
+    cumulative += rate;
+    if (rand <= cumulative) return rarity;
+  }
+  return "R";
+}
+
+function pullCard(banner: typeof BANNERS[0], pity: number): Character {
+  const rarity = pity >= 100 ? "UR" : rollRarity(banner.rates);
+  const pool = banner.pool
+    ? CHARACTERS.filter(c => banner.pool!.includes(c.id) && c.rarity === rarity)
+    : CHARACTERS.filter(c => !c.banner && c.rarity === rarity);
+  if (pool.length === 0) {
+    const fallback = CHARACTERS.filter(c => c.rarity === rarity);
+    return fallback[Math.floor(Math.random() * fallback.length)];
+  }
+  // Weight featured cards 3x
+  const weighted: Character[] = [];
+  pool.forEach(c => {
+    const times = banner.featured.includes(c.id) ? 3 : 1;
+    for (let i = 0; i < times; i++) weighted.push(c);
+  });
+  return weighted[Math.floor(Math.random() * weighted.length)];
+}
+
+interface CardRevealProps {
+  char: Character;
+  index: number;
+  revealed: boolean;
+  onClick: () => void;
+}
+
+function CardReveal({ char, index, revealed, onClick }: CardRevealProps) {
+  const style = RARITY_STYLES[char.rarity];
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 40, scale: 0.8 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ delay: index * 0.07, type: "spring", stiffness: 260, damping: 20 }}
+      style={{ perspective: 600 }}
+      onClick={onClick}
+    >
+      <motion.div
+        animate={{ rotateY: revealed ? 0 : 180 }}
+        transition={{ duration: 0.45 }}
+        style={{ transformStyle: "preserve-3d", position: "relative" }}
+      >
+        {/* Front */}
+        <div
+          className={`rounded-2xl border-2 ${style.border} overflow-hidden cursor-pointer ${char.rarity === "UR" ? "shadow-rose-400 shadow-xl" : char.rarity === "SSR" ? "shadow-amber-300 shadow-lg" : char.rarity === "SR" ? "shadow-purple-300 shadow-md" : ""}`}
+          style={{ backfaceVisibility: "hidden" }}
+        >
+          <CardImage character={char} size="sm" showName />
+          <div className="bg-white px-2 pb-2 pt-1">
+            <div className="flex justify-center gap-0.5 mb-0.5">
+              {Array.from({ length: style.stars }).map((_, i) => (
+                <Star key={i} size={8} className="fill-amber-400 text-amber-400" />
+              ))}
+            </div>
+            <p className="text-muted-foreground text-center truncate" style={{ fontSize: "0.5rem" }}>{char.characterName}</p>
+          </div>
+        </div>
+        {/* Back */}
+        <div
+          className="absolute inset-0 rounded-2xl border-2 border-primary bg-gradient-to-b from-primary to-indigo-800 flex items-center justify-center cursor-pointer"
+          style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
+        >
+          <div className="text-center">
+            <div className="text-3xl mb-1">✨</div>
+            <p className="text-white/70" style={{ fontSize: "0.55rem" }}>Tap to reveal</p>
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+interface Props {
+  coins: number;
+  onSpend: (amount: number) => void;
+  onGain: (cards: OwnedCard[]) => void;
+  pityCount: number;
+  setPityCount: (n: number) => void;
+}
+
+export function GachaScreen({ coins, onSpend, onGain, pityCount, setPityCount }: Props) {
+  const [selectedBannerIdx, setSelectedBannerIdx] = useState(0);
+  const [pulledCards, setPulledCards] = useState<Character[]>([]);
+  const [revealed, setRevealed] = useState<boolean[]>([]);
+  const [showResults, setShowResults] = useState(false);
+
+  const banner = BANNERS[selectedBannerIdx];
+
+  const doPull = useCallback((count: 1 | 10) => {
+    const cost = count === 1 ? PULL_COST.single : PULL_COST.ten;
+    if (coins < cost) return;
+    onSpend(cost);
+
+    let newPity = pityCount;
+    const cards: Character[] = [];
+
+    for (let i = 0; i < count; i++) {
+      const card = pullCard(banner, newPity);
+      cards.push(card);
+      newPity = card.rarity === "UR" ? 0 : newPity + 1;
+    }
+    setPityCount(newPity);
+
+    const newOwned: OwnedCard[] = cards.map(c => ({
+      characterId: c.id,
+      id: `${c.id}-${Date.now()}-${Math.random()}`,
+      level: 1,
+      limitBreak: 0,
+      obtainedAt: new Date(),
+    }));
+    onGain(newOwned);
+    setPulledCards(cards);
+    setRevealed(new Array(cards.length).fill(false));
+    setShowResults(true);
+  }, [coins, banner, pityCount, onSpend, onGain, setPityCount]);
+
+  const revealAll = () => setRevealed(prev => prev.map(() => true));
+  const revealOne = (i: number) => setRevealed(prev => { const n = [...prev]; n[i] = true; return n; });
+  const close = () => { setShowResults(false); setPulledCards([]); };
+
+  return (
+    <div className="h-full flex flex-col">
+      {/* Banner tabs */}
+      <div className="flex gap-2 overflow-x-auto p-4 pb-2">
+        {BANNERS.map((b, i) => (
+          <button
+            key={b.id}
+            onClick={() => setSelectedBannerIdx(i)}
+            className={`flex-shrink-0 rounded-2xl px-4 py-2 text-sm font-semibold transition-all ${selectedBannerIdx === i ? "bg-primary text-white shadow-md scale-105" : "bg-white text-muted-foreground border border-border"}`}
+            style={{ fontFamily: "'Outfit', sans-serif" }}
+          >
+            {b.emoji} {b.name.split(" ")[0]}
+          </button>
+        ))}
+      </div>
+
+      {/* Banner hero */}
+      <div className={`mx-4 rounded-3xl bg-gradient-to-br ${banner.gradient} p-5 text-white relative overflow-hidden shadow-lg`}>
+        <div className="absolute top-3 right-4 text-6xl opacity-20 select-none">{banner.emoji}</div>
+        <div className="relative z-10">
+          <div className="flex items-center gap-2 mb-1">
+            {banner.limited && <span className="bg-rose-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">LIMITED</span>}
+            <span className="text-white/70 text-xs">{banner.subtitle}</span>
+          </div>
+          <h2 style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: "1.3rem" }}>{banner.name}</h2>
+          <p className="text-white/80 text-sm mt-1">{banner.description}</p>
+          {banner.endDate && <p className="text-white/60 text-xs mt-2">⏰ Ends {banner.endDate}</p>}
+
+          {/* Featured cards */}
+          <div className="flex gap-2 mt-4 overflow-x-auto pb-1">
+            {banner.featured.map(id => {
+              const char = CHARACTERS.find(c => c.id === id);
+              if (!char) return null;
+              return (
+                <div key={id} className="flex-shrink-0 w-14 border-2 border-white/40 rounded-xl overflow-hidden">
+                  <CardImage character={char} size="xs" showName />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Rates + pity */}
+      <div className="mx-4 mt-3 bg-white rounded-2xl p-3 border border-border flex items-center justify-between shadow-sm">
+        <div className="flex gap-4">
+          {(Object.entries(banner.rates) as [Rarity, number][]).map(([r, rate]) => (
+            <div key={r} className="text-center">
+              <div className={`text-xs font-bold ${r === "UR" ? "text-rose-500" : r === "SSR" ? "text-amber-500" : r === "SR" ? "text-purple-500" : "text-slate-400"}`}>{r}</div>
+              <div className="text-xs text-muted-foreground">{rate}%</div>
+            </div>
+          ))}
+        </div>
+        <div className="text-right">
+          <div className="text-xs text-muted-foreground">Pity</div>
+          <div className="text-sm font-bold text-primary">{pityCount}/100</div>
+        </div>
+      </div>
+
+      {/* Pull buttons */}
+      <div className="px-4 mt-4 flex gap-3">
+        <button
+          disabled={coins < PULL_COST.single}
+          onClick={() => doPull(1)}
+          className="flex-1 bg-white border-2 border-primary text-primary rounded-2xl py-4 font-bold disabled:opacity-50 active:scale-95 transition-transform"
+          style={{ fontFamily: "'Outfit', sans-serif" }}
+        >
+          <div>Single Pull</div>
+          <div className="flex items-center justify-center gap-1 text-sm text-amber-500 mt-0.5">🪙 {PULL_COST.single.toLocaleString()}</div>
+        </button>
+        <button
+          disabled={coins < PULL_COST.ten}
+          onClick={() => doPull(10)}
+          className="flex-1 bg-primary text-white rounded-2xl py-4 font-bold disabled:opacity-50 active:scale-95 transition-transform shadow-md"
+          style={{ fontFamily: "'Outfit', sans-serif" }}
+        >
+          <div>10 Pull</div>
+          <div className="flex items-center justify-center gap-1 text-sm text-amber-300 mt-0.5">🪙 {PULL_COST.ten.toLocaleString()}</div>
+        </button>
+      </div>
+      <div className="mt-2 text-center text-xs text-muted-foreground">
+        🪙 <span className="font-bold text-amber-500">{coins.toLocaleString()}</span> coins available
+      </div>
+
+      {/* Results modal */}
+      <AnimatePresence>
+        {showResults && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex flex-col bg-black/85 backdrop-blur-sm"
+          >
+            <div className="flex items-center justify-between p-4 pt-8">
+              <span className="text-white font-bold text-lg" style={{ fontFamily: "'Outfit', sans-serif" }}>
+                {pulledCards.length === 1 ? "Single Pull!" : "10 Pull Results!"}
+              </span>
+              <div className="flex gap-2">
+                <button onClick={revealAll} className="bg-white/20 text-white text-sm px-3 py-1.5 rounded-xl font-semibold">Reveal All</button>
+                <button onClick={close} className="bg-white/20 text-white rounded-xl p-1.5"><X size={18} /></button>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4">
+              {pulledCards.length === 1 ? (
+                <div className="max-w-[160px] mx-auto mt-6">
+                  <CardReveal char={pulledCards[0]} index={0} revealed={revealed[0]} onClick={() => revealOne(0)} />
+                </div>
+              ) : (
+                <div className="grid grid-cols-5 gap-2">
+                  {pulledCards.map((char, i) => (
+                    <CardReveal key={i} char={char} index={i} revealed={revealed[i]} onClick={() => revealOne(i)} />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Summary */}
+            <div className="p-4 bg-black/50 border-t border-white/10">
+              <div className="flex justify-around text-center mb-3">
+                {(["UR", "SSR", "SR", "R"] as Rarity[]).map(r => {
+                  const count = pulledCards.filter(c => c.rarity === r).length;
+                  return (
+                    <div key={r} className={count > 0 ? "opacity-100" : "opacity-30"}>
+                      <div className={`font-bold text-xl ${r === "UR" ? "text-rose-400" : r === "SSR" ? "text-amber-400" : r === "SR" ? "text-purple-400" : "text-slate-400"}`}>{count}</div>
+                      <div className="text-white/60 text-xs">{r}</div>
+                    </div>
+                  );
+                })}
+              </div>
+              <button
+                onClick={() => { close(); doPull(pulledCards.length === 1 ? 1 : 10); }}
+                disabled={coins < (pulledCards.length === 1 ? PULL_COST.single : PULL_COST.ten)}
+                className="w-full bg-primary text-white rounded-2xl py-3 font-bold disabled:opacity-50"
+                style={{ fontFamily: "'Outfit', sans-serif" }}
+              >
+                Pull Again
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
