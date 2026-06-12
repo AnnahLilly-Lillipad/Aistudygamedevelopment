@@ -69,9 +69,10 @@ function CardReveal({ char, index, revealed, onClick }: CardRevealProps) {
         >
           <div className="relative">
             <CardImage character={char} size="sm" showName />
-            <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-0.5">
+            {/* Stars — bottom-right corner, inside the name gradient */}
+            <div className="absolute bottom-1 right-1 flex gap-px">
               {Array.from({ length: style.stars }).map((_, i) => (
-                <Star key={i} size={7} className="fill-amber-400 text-amber-400 drop-shadow" />
+                <Star key={i} size={8} className="fill-amber-400 text-amber-400 drop-shadow-sm" />
               ))}
             </div>
           </div>
