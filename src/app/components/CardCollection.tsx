@@ -67,7 +67,7 @@ function CardDetail({
             {char.variant && (
               <p className="text-primary text-sm font-semibold">{char.variant}</p>
             )}
-            <p className="text-muted-foreground text-sm">{char.ability}</p>
+            <p className="text-muted-foreground text-xs italic mt-0.5">{char.ability}</p>
             <div className="flex gap-2 mt-2 flex-wrap">
               <span className={`text-xs px-2 py-1 rounded-full font-semibold ${ELEMENT_COLORS[char.element]}`}>{char.element}</span>
               <span className="text-xs px-2 py-1 rounded-full font-semibold bg-secondary text-secondary-foreground">{char.faction}</span>
@@ -75,6 +75,14 @@ function CardDetail({
               {char.au && <span className="text-xs px-2 py-1 rounded-full font-semibold bg-violet-100 text-violet-600">{char.au}</span>}
             </div>
           </div>
+        </div>
+
+        {/* Story description */}
+        <div className={`mt-3 rounded-2xl p-3 ${char.au ? "bg-violet-50 border border-violet-100" : "bg-secondary"}`}>
+          {char.au && (
+            <p className="text-xs font-bold text-violet-500 mb-1">📖 {char.au} Story</p>
+          )}
+          <p className="text-sm text-muted-foreground leading-relaxed">{char.description}</p>
         </div>
 
         <div className="grid grid-cols-3 gap-3 mt-4">

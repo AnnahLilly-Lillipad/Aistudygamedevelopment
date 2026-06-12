@@ -256,13 +256,13 @@ export function GachaScreen({ coins, onSpend, onGain, pityCount, setPityCount }:
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4">
+            <div className="flex-1 flex items-center justify-center px-3 py-4">
               {pulledCards.length === 1 ? (
-                <div className="max-w-[160px] mx-auto mt-6">
+                <div className="max-w-[160px]">
                   <CardReveal char={pulledCards[0]} index={0} revealed={revealed[0]} onClick={() => revealOne(0)} />
                 </div>
               ) : (
-                <div className="grid grid-cols-5 gap-2">
+                <div className="grid grid-cols-5 gap-1.5 w-full">
                   {pulledCards.map((char, i) => (
                     <CardReveal key={i} char={char} index={i} revealed={revealed[i]} onClick={() => revealOne(i)} />
                   ))}

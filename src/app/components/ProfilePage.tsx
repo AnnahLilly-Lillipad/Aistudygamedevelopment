@@ -37,7 +37,7 @@ interface Props {
 }
 
 export function ProfilePage({ coins, ownedCards }: Props) {
-  const [activeTab, setActiveTab] = useState<"overview" | "achievements" | "buffs" | "leaderboard">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "achievements" | "buffs" | "leaderboard" | "legal">("overview");
 
   const ownedCount = new Set(ownedCards.map(c => c.characterId)).size;
   const urCount = ownedCards.filter(oc => CHARACTERS.find(c => c.id === oc.characterId)?.rarity === "UR").length;
@@ -57,6 +57,7 @@ export function ProfilePage({ coins, ownedCards }: Props) {
     { id: "achievements", label: "Badges" },
     { id: "buffs", label: "Buffs" },
     { id: "leaderboard", label: "Ranking" },
+    { id: "legal", label: "Legal" },
   ] as const;
 
   return (
@@ -228,6 +229,50 @@ export function ProfilePage({ coins, ownedCards }: Props) {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Legal / Copyright */}
+        {activeTab === "legal" && (
+          <div className="p-4 space-y-4">
+            <div className="bg-white rounded-2xl border border-border p-5 shadow-sm">
+              <div className="text-center mb-4">
+                <div className="text-4xl mb-2">⚖️</div>
+                <h3 style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: "1.1rem", color: "var(--foreground)" }}>Copyright Disclaimer</h3>
+              </div>
+              <div className="space-y-3 text-sm text-muted-foreground leading-relaxed">
+                <p>
+                  <span className="font-semibold text-foreground">StudyTales</span> is an independent, fan-made study application created purely for educational and entertainment purposes.
+                </p>
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
+                  <p className="font-semibold text-amber-800 mb-1">🎌 Bungou Stray Dogs</p>
+                  <p className="text-amber-700 text-xs">
+                    I do not own <em>Bungou Stray Dogs</em>, its characters, story, or any related content. All rights belong to <strong>Kafka Asagiri</strong> (author) and <strong>Sango Harukawa</strong> (illustrator), published by <strong>KADOKAWA Corporation</strong>. The anime is produced by <strong>Bones Inc.</strong>
+                  </p>
+                </div>
+                <div className="bg-blue-50 border border-blue-100 rounded-xl p-3">
+                  <p className="font-semibold text-blue-800 mb-1">📚 Other Fandoms & Crossovers</p>
+                  <p className="text-blue-700 text-xs">
+                    This app references characters and universes from other works (Harry Potter, My Hero Academia, Percy Jackson, and others) strictly as fan-made alternate universe content. All respective properties belong to their original creators and rights holders.
+                  </p>
+                </div>
+                <div className="bg-secondary rounded-xl p-3">
+                  <p className="font-semibold text-foreground mb-1">🖼️ Artwork</p>
+                  <p className="text-xs">
+                    I do not own any of the artwork used in this application. All character images belong to their respective creators and rights holders. No copyright infringement is intended.
+                  </p>
+                </div>
+                <div className="bg-secondary rounded-xl p-3">
+                  <p className="font-semibold text-foreground mb-1">💼 No Commercial Use</p>
+                  <p className="text-xs">
+                    This is a non-commercial, fan-made project. It is not affiliated with, endorsed by, or connected to any of the above rights holders in any way.
+                  </p>
+                </div>
+                <p className="text-center text-xs text-muted-foreground pt-2 border-t border-border">
+                  Made with ❤️ by a fan, for fans.
+                </p>
+              </div>
+            </div>
           </div>
         )}
 
