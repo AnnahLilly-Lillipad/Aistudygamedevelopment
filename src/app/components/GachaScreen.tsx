@@ -67,14 +67,13 @@ function CardReveal({ char, index, revealed, onClick }: CardRevealProps) {
           className={`rounded-2xl border-2 ${style.border} overflow-hidden cursor-pointer ${char.rarity === "UR" ? "shadow-rose-400 shadow-xl" : char.rarity === "SSR" ? "shadow-amber-300 shadow-lg" : char.rarity === "SR" ? "shadow-purple-300 shadow-md" : ""}`}
           style={{ backfaceVisibility: "hidden" }}
         >
-          <CardImage character={char} size="sm" showName />
-          <div className="bg-white px-2 pb-2 pt-1">
-            <div className="flex justify-center gap-0.5 mb-0.5">
+          <div className="relative">
+            <CardImage character={char} size="sm" showName />
+            <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-0.5">
               {Array.from({ length: style.stars }).map((_, i) => (
-                <Star key={i} size={8} className="fill-amber-400 text-amber-400" />
+                <Star key={i} size={7} className="fill-amber-400 text-amber-400 drop-shadow" />
               ))}
             </div>
-            <p className="text-muted-foreground text-center truncate" style={{ fontSize: "0.5rem" }}>{char.characterName}</p>
           </div>
         </div>
         {/* Back */}
@@ -128,6 +127,7 @@ export function GachaScreen({ coins, onSpend, onGain, pityCount, setPityCount }:
       id: `${c.id}-${Date.now()}-${Math.random()}`,
       level: 1,
       limitBreak: 0,
+      awakened: false,
       obtainedAt: new Date(),
     }));
     onGain(newOwned);

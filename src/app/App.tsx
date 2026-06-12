@@ -27,11 +27,11 @@ const NAV_ITEMS: { id: Tab; label: string; icon: React.ReactNode }[] = [
 interface ToastNotif { id: string; message: string; coins?: number; }
 
 const INITIAL_OWNED_CARDS: OwnedCard[] = [
-  { characterId: 1, id: "init-1", level: 15, limitBreak: 0, obtainedAt: new Date() },
-  { characterId: 2, id: "init-2", level: 8, limitBreak: 0, obtainedAt: new Date() },
-  { characterId: 5, id: "init-5", level: 12, limitBreak: 1, obtainedAt: new Date() },
-  { characterId: 10, id: "init-10", level: 10, limitBreak: 0, obtainedAt: new Date() },
-  { characterId: 11, id: "init-11", level: 20, limitBreak: 2, obtainedAt: new Date() },
+  { characterId: 1, id: "init-1", level: 15, limitBreak: 0, awakened: false, obtainedAt: new Date() },
+  { characterId: 2, id: "init-2", level: 8, limitBreak: 0, awakened: false, obtainedAt: new Date() },
+  { characterId: 5, id: "init-5", level: 12, limitBreak: 1, awakened: false, obtainedAt: new Date() },
+  { characterId: 10, id: "init-10", level: 10, limitBreak: 0, awakened: false, obtainedAt: new Date() },
+  { characterId: 11, id: "init-11", level: 20, limitBreak: 2, awakened: false, obtainedAt: new Date() },
 ];
 
 export default function App() {
@@ -59,17 +59,25 @@ export default function App() {
   const gainCards = useCallback((cards: OwnedCard[]) => {
     setOwnedCards(prev => {
       const merged = new Map<number, OwnedCard>();
-      [...prev, ...cards].forEach(card => {
+      prev.forEach(card => merged.set(card.characterId, card));
+      cards.forEach(card => {
         if (merged.has(card.characterId)) {
           const existing = merged.get(card.characterId)!;
           merged.set(card.characterId, { ...existing, limitBreak: Math.min(existing.limitBreak + 1, 5) });
         } else {
-          merged.set(card.characterId, card);
+          merged.set(card.characterId, { ...card, awakened: false });
         }
       });
       return Array.from(merged.values());
     });
   }, []);
+
+  const awakenCard = useCallback((characterId: number) => {
+    setOwnedCards(prev =>
+      prev.map(c => c.characterId === characterId ? { ...c, awakened: true } : c)
+    );
+    showToast("Card Awakened! ✦ New power unlocked!");
+  }, [showToast]);
 
   const navigate = useCallback((tab: string) => setActiveTab(tab as Tab), []);
 
@@ -79,7 +87,7 @@ export default function App() {
       case "study": return <StudyMode onEarnCoins={earnCoins} />;
       case "games": return <GamesHub onEarnCoins={earnCoins} />;
       case "gacha": return <GachaScreen coins={coins} onSpend={spendCoins} onGain={gainCards} pityCount={pityCount} setPityCount={setPityCount} />;
-      case "collection": return <CardCollection ownedCards={ownedCards} onNavigate={navigate} />;
+      case "collection": return <CardCollection ownedCards={ownedCards} onNavigate={navigate} onAwaken={awakenCard} />;
       case "battle": return <BattleMode ownedCards={ownedCards} onEarnCoins={earnCoins} />;
       case "chat": return <AIChat />;
       case "profile": return <ProfilePage coins={coins} ownedCards={ownedCards} />;
