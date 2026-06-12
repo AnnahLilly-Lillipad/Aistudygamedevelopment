@@ -45,10 +45,12 @@ interface CardRevealProps {
   index: number;
   revealed: boolean;
   onClick: () => void;
+  size?: "sm" | "md" | "lg";
 }
 
-function CardReveal({ char, index, revealed, onClick }: CardRevealProps) {
+function CardReveal({ char, index, revealed, onClick, size = "sm" }: CardRevealProps) {
   const style = RARITY_STYLES[char.rarity];
+  const starSize = size === "lg" ? 14 : size === "md" ? 11 : 8;
   return (
     <motion.div
       initial={{ opacity: 0, y: 30, scale: 0.85 }}
@@ -68,13 +70,21 @@ function CardReveal({ char, index, revealed, onClick }: CardRevealProps) {
           style={{ backfaceVisibility: "hidden" }}
         >
           <div className="relative">
-            <CardImage character={char} size="sm" showName={false} />
+            <CardImage character={char} size={size} showName={false} />
             {/* Stars — bottom-right */}
-            <div className="absolute bottom-1 right-1 flex gap-px">
+            <div className="absolute bottom-1.5 right-1.5 flex gap-0.5">
               {Array.from({ length: style.stars }).map((_, i) => (
-                <Star key={i} size={8} className="fill-amber-400 text-amber-400 drop-shadow" />
+                <Star key={i} size={starSize} className="fill-amber-400 text-amber-400 drop-shadow" />
               ))}
             </div>
+            {/* Rarity glow for high rarity */}
+            {(char.rarity === "UR" || char.rarity === "SSR") && (
+              <div className="absolute inset-0 pointer-events-none" style={{
+                background: char.rarity === "UR"
+                  ? "linear-gradient(to top, rgba(251,113,133,0.25) 0%, transparent 60%)"
+                  : "linear-gradient(to top, rgba(251,191,36,0.2) 0%, transparent 60%)"
+              }} />
+            )}
           </div>
         </div>
         {/* Back */}
@@ -83,8 +93,8 @@ function CardReveal({ char, index, revealed, onClick }: CardRevealProps) {
           style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
         >
           <div className="text-center flex flex-col items-center gap-1">
-            <Sparkles size={22} className="text-white/80" />
-            <p className="text-white/70" style={{ fontSize: "0.52rem" }}>Tap to reveal</p>
+            <Sparkles size={size === "lg" ? 32 : 22} className="text-white/80" />
+            <p className="text-white/70" style={{ fontSize: size === "lg" ? "0.75rem" : "0.52rem" }}>Tap to reveal</p>
           </div>
         </div>
       </motion.div>
@@ -313,8 +323,8 @@ export function GachaScreen({ coins, onSpend, onGain, pityCount, setPityCount }:
               {/* Cards grid */}
               <div className="px-3 py-2">
                 {pulledCards.length === 1 ? (
-                  <div className="max-w-[150px] mx-auto py-2">
-                    <CardReveal char={pulledCards[0]} index={0} revealed={revealed[0]} onClick={() => revealOne(0)} />
+                  <div className="w-44 mx-auto py-2">
+                    <CardReveal char={pulledCards[0]} index={0} revealed={revealed[0]} onClick={() => revealOne(0)} size="lg" />
                   </div>
                 ) : (
                   <div className="grid grid-cols-5 gap-1.5">
