@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { X, Star } from "lucide-react";
+import { X, Star, Sparkles, Coins, Clock } from "lucide-react";
 import { CHARACTERS, BANNERS, type Character, type Rarity, type OwnedCard } from "../data/characters";
 import { CardImage } from "./CardImage";
 
@@ -32,7 +32,6 @@ function pullCard(banner: typeof BANNERS[0], pity: number): Character {
     const fallback = CHARACTERS.filter(c => c.rarity === rarity);
     return fallback[Math.floor(Math.random() * fallback.length)];
   }
-  // Weight featured cards 3x
   const weighted: Character[] = [];
   pool.forEach(c => {
     const times = banner.featured.includes(c.id) ? 3 : 1;
@@ -83,8 +82,8 @@ function CardReveal({ char, index, revealed, onClick }: CardRevealProps) {
           className="absolute inset-0 rounded-2xl border-2 border-primary bg-gradient-to-b from-primary to-indigo-800 flex items-center justify-center cursor-pointer"
           style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
         >
-          <div className="text-center">
-            <div className="text-3xl mb-1">✨</div>
+          <div className="text-center flex flex-col items-center gap-1">
+            <Sparkles size={24} className="text-white/80" />
             <p className="text-white/70" style={{ fontSize: "0.55rem" }}>Tap to reveal</p>
           </div>
         </div>
@@ -152,14 +151,16 @@ export function GachaScreen({ coins, onSpend, onGain, pityCount, setPityCount }:
             className={`flex-shrink-0 rounded-2xl px-4 py-2 text-sm font-semibold transition-all ${selectedBannerIdx === i ? "bg-primary text-white shadow-md scale-105" : "bg-white text-muted-foreground border border-border"}`}
             style={{ fontFamily: "'Outfit', sans-serif" }}
           >
-            {b.emoji} {b.name.split(" ")[0]}
+            {b.name.split(" ")[0]}
           </button>
         ))}
       </div>
 
       {/* Banner hero */}
       <div className={`mx-4 rounded-3xl bg-gradient-to-br ${banner.gradient} p-5 text-white relative overflow-hidden shadow-lg`}>
-        <div className="absolute top-3 right-4 text-6xl opacity-20 select-none">{banner.emoji}</div>
+        <div className="absolute top-3 right-4 opacity-10 select-none">
+          <Sparkles size={72} className="text-white" />
+        </div>
         <div className="relative z-10">
           <div className="flex items-center gap-2 mb-1">
             {banner.limited && <span className="bg-rose-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">LIMITED</span>}
@@ -167,7 +168,12 @@ export function GachaScreen({ coins, onSpend, onGain, pityCount, setPityCount }:
           </div>
           <h2 style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: "1.3rem" }}>{banner.name}</h2>
           <p className="text-white/80 text-sm mt-1">{banner.description}</p>
-          {banner.endDate && <p className="text-white/60 text-xs mt-2">⏰ Ends {banner.endDate}</p>}
+          {banner.endDate && (
+            <div className="flex items-center gap-1 text-white/60 text-xs mt-2">
+              <Clock size={11} />
+              <span>Ends {banner.endDate}</span>
+            </div>
+          )}
 
           {/* Featured cards */}
           <div className="flex gap-2 mt-4 overflow-x-auto pb-1">
@@ -209,7 +215,9 @@ export function GachaScreen({ coins, onSpend, onGain, pityCount, setPityCount }:
           style={{ fontFamily: "'Outfit', sans-serif" }}
         >
           <div>Single Pull</div>
-          <div className="flex items-center justify-center gap-1 text-sm text-amber-500 mt-0.5">🪙 {PULL_COST.single.toLocaleString()}</div>
+          <div className="flex items-center justify-center gap-1 text-sm text-amber-500 mt-0.5">
+            <Coins size={13} /> {PULL_COST.single.toLocaleString()}
+          </div>
         </button>
         <button
           disabled={coins < PULL_COST.ten}
@@ -218,11 +226,15 @@ export function GachaScreen({ coins, onSpend, onGain, pityCount, setPityCount }:
           style={{ fontFamily: "'Outfit', sans-serif" }}
         >
           <div>10 Pull</div>
-          <div className="flex items-center justify-center gap-1 text-sm text-amber-300 mt-0.5">🪙 {PULL_COST.ten.toLocaleString()}</div>
+          <div className="flex items-center justify-center gap-1 text-sm text-amber-300 mt-0.5">
+            <Coins size={13} /> {PULL_COST.ten.toLocaleString()}
+          </div>
         </button>
       </div>
-      <div className="mt-2 text-center text-xs text-muted-foreground">
-        🪙 <span className="font-bold text-amber-500">{coins.toLocaleString()}</span> coins available
+      <div className="mt-2 text-center text-xs text-muted-foreground flex items-center justify-center gap-1">
+        <Coins size={12} className="text-amber-500" />
+        <span className="font-bold text-amber-500">{coins.toLocaleString()}</span>
+        <span>coins available</span>
       </div>
 
       {/* Results modal */}
