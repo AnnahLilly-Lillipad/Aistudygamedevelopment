@@ -44,6 +44,8 @@ export function BattleMode({ ownedCards, onEarnCoins }: Props) {
   const [log, setLog] = useState<string[]>([]);
   const [winner, setWinner] = useState<"player" | "enemy" | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [isDefending, setIsDefending] = useState(false);
+  const [skillCooldown, setSkillCooldown] = useState(0);
 
   const ownedCharIds = [...new Set(ownedCards.map(oc => oc.characterId))];
   const ownedChars = CHARACTERS.filter(c => ownedCharIds.includes(c.id));
@@ -76,6 +78,7 @@ export function BattleMode({ ownedCards, onEarnCoins }: Props) {
 
   const doAction = useCallback((action: "attack" | "skill" | "defend") => {
     if (isAnimating || turn !== "player") return;
+    if (action === "skill" && skillCooldown > 0) return;
     setIsAnimating(true);
 
     const attacker = playerStates.find(s => s.hp > 0);
@@ -87,13 +90,19 @@ export function BattleMode({ ownedCards, onEarnCoins }: Props) {
     if (action === "attack") {
       const mult = getMultiplier(attacker.char, target.char);
       dmg = Math.floor(attacker.char.atk * mult * (0.9 + Math.random() * 0.2));
-      addLog(`${attacker.char.displayName} attacks! ${mult > 1 ? "⚡ Effective!" : mult < 1 ? "Not very effective…" : ""} -${dmg.toLocaleString()}`);
+      addLog(`${attacker.char.displayName} attacks! ${mult > 1 ? "⚡ Effective!" : mult < 1 ? "🔻 Not very effective…" : ""} -${dmg.toLocaleString()}`);
+      setIsDefending(false);
     } else if (action === "skill") {
       dmg = Math.floor(attacker.char.atk * 2.2 * (0.9 + Math.random() * 0.2));
       addLog(`⚡ ${attacker.char.displayName} uses ${attacker.char.skill}! -${dmg.toLocaleString()}`);
+      setSkillCooldown(3);
+      setIsDefending(false);
     } else {
-      addLog(`${attacker.char.displayName} takes a defensive stance.`);
+      addLog(`🛡️ ${attacker.char.displayName} braces for impact! (DMG -50% next hit)`);
+      setIsDefending(true);
     }
+
+    if (skillCooldown > 0) setSkillCooldown(c => Math.max(0, c - 1));
 
     setEnemyStates(prev => {
       const next = [...prev];
@@ -117,8 +126,11 @@ export function BattleMode({ ownedCards, onEarnCoins }: Props) {
         if (!eAttacker || !pTarget) { setIsAnimating(false); return current; }
 
         const mult = getMultiplier(eAttacker.char, pTarget.char);
-        const eDmg = Math.floor(eAttacker.char.atk * 0.8 * mult * (0.9 + Math.random() * 0.2));
-        addLog(`${eAttacker.char.displayName} attacks! -${eDmg.toLocaleString()}`);
+        let eDmg = Math.floor(eAttacker.char.atk * 0.8 * mult * (0.9 + Math.random() * 0.2));
+        const defended = isDefending;
+        if (defended) eDmg = Math.floor(eDmg * 0.5);
+        addLog(`${eAttacker.char.displayName} attacks!${defended ? " 🛡️ Blocked!" : ""} -${eDmg.toLocaleString()}`);
+        setIsDefending(false);
 
         setPlayerStates(prev => {
           const next = [...prev];
@@ -130,12 +142,13 @@ export function BattleMode({ ownedCards, onEarnCoins }: Props) {
           return next;
         });
 
+        setSkillCooldown(c => Math.max(0, c - 1));
         setTurn("player");
         setIsAnimating(false);
         return current;
       });
     }, 900);
-  }, [isAnimating, turn, playerStates, enemyStates, onEarnCoins]);
+  }, [isAnimating, turn, skillCooldown, isDefending, playerStates, enemyStates, onEarnCoins]);
 
   if (state === "teamSelect") {
     return (
@@ -274,17 +287,37 @@ export function BattleMode({ ownedCards, onEarnCoins }: Props) {
 
       {/* Actions */}
       <div className={`grid grid-cols-3 gap-2 ${(turn !== "player" || isAnimating) ? "opacity-40 pointer-events-none" : ""}`}>
-        <button onClick={() => doAction("attack")} className="py-4 rounded-2xl bg-gradient-to-b from-red-500 to-red-600 text-white font-bold shadow-sm" style={{ fontFamily: "'Outfit', sans-serif" }}>
-          <Swords size={20} className="mx-auto mb-1" />Attack
+        <button onClick={() => doAction("attack")} className="py-3 rounded-2xl bg-gradient-to-b from-red-500 to-red-600 text-white font-bold shadow-sm" style={{ fontFamily: "'Outfit', sans-serif" }}>
+          <Swords size={18} className="mx-auto mb-0.5" />
+          <div className="text-sm">Attack</div>
         </button>
-        <button onClick={() => doAction("skill")} className="py-4 rounded-2xl bg-gradient-to-b from-purple-500 to-indigo-600 text-white font-bold shadow-sm" style={{ fontFamily: "'Outfit', sans-serif" }}>
-          <Zap size={20} className="mx-auto mb-1" />Skill
+        <button
+          onClick={() => doAction("skill")}
+          disabled={skillCooldown > 0}
+          className="py-3 rounded-2xl bg-gradient-to-b from-purple-500 to-indigo-600 text-white font-bold shadow-sm disabled:opacity-50 relative"
+          style={{ fontFamily: "'Outfit', sans-serif" }}
+        >
+          <Zap size={18} className="mx-auto mb-0.5" />
+          <div className="text-sm">Skill</div>
+          {skillCooldown > 0 && (
+            <span className="absolute top-1 right-1.5 text-xs bg-black/40 rounded-full px-1 font-bold">{skillCooldown}</span>
+          )}
         </button>
-        <button onClick={() => doAction("defend")} className="py-4 rounded-2xl bg-gradient-to-b from-blue-400 to-blue-500 text-white font-bold shadow-sm" style={{ fontFamily: "'Outfit', sans-serif" }}>
-          <Shield size={20} className="mx-auto mb-1" />Defend
+        <button
+          onClick={() => doAction("defend")}
+          className={`py-3 rounded-2xl font-bold shadow-sm transition-all ${isDefending ? "bg-blue-200 text-blue-700 border-2 border-blue-400" : "bg-gradient-to-b from-blue-400 to-blue-500 text-white"}`}
+          style={{ fontFamily: "'Outfit', sans-serif" }}
+        >
+          <Shield size={18} className="mx-auto mb-0.5" />
+          <div className="text-sm">{isDefending ? "Braced" : "Defend"}</div>
         </button>
       </div>
       {turn === "enemy" && <p className="text-center text-sm text-muted-foreground mt-2 animate-pulse">Enemy is thinking…</p>}
+      {turn === "player" && !isAnimating && (
+        <p className="text-center text-xs text-muted-foreground mt-1">
+          {isDefending ? "🛡️ Defending — next hit blocked 50%" : skillCooldown > 0 ? `⚡ Skill ready in ${skillCooldown} turn${skillCooldown > 1 ? "s" : ""}` : ""}
+        </p>
+      )}
     </div>
   );
 }

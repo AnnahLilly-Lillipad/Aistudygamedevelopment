@@ -172,29 +172,75 @@ function QuizGame({ onEarnCoins, onBack }: QuizGameProps) {
   );
 }
 
-function FlashcardGame({ onBack }: { onBack: () => void }) {
+function FlashcardGame({ onBack, onEarnCoins }: { onBack: () => void; onEarnCoins: (amount: number, reason: string) => void }) {
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
+  const [seen, setSeen] = useState<Set<number>>(new Set([0]));
+  const [done, setDone] = useState(false);
+  const [coinsAwarded, setCoinsAwarded] = useState(false);
 
   const card = FLASHCARDS[index];
+  const progress = (seen.size / FLASHCARDS.length) * 100;
+
+  const goTo = (newIndex: number) => {
+    setIndex(newIndex);
+    setFlipped(false);
+    setSeen(prev => {
+      const next = new Set(prev);
+      next.add(newIndex);
+      return next;
+    });
+  };
+
+  const handleFlip = () => {
+    setFlipped(f => !f);
+  };
+
+  const handleDone = () => {
+    if (!coinsAwarded) {
+      onEarnCoins(60, "🃏 Flashcard deck complete!");
+      setCoinsAwarded(true);
+    }
+    setDone(true);
+  };
+
+  if (done) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+        <div className="text-6xl mb-4">🃏</div>
+        <h2 style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: "1.8rem", color: "var(--foreground)" }}>Deck Complete!</h2>
+        <p className="text-muted-foreground mt-2">You reviewed all {FLASHCARDS.length} cards</p>
+        <div className="flex items-center gap-2 mt-4 text-2xl font-bold text-amber-500">🪙 +60</div>
+        <div className="flex gap-3 mt-8 w-full max-w-xs">
+          <button onClick={onBack} className="flex-1 py-3 rounded-2xl bg-white border-2 border-border font-bold">Back</button>
+          <button onClick={() => { setIndex(0); setFlipped(false); setSeen(new Set([0])); setDone(false); }} className="flex-1 py-3 rounded-2xl bg-primary text-white font-bold">Again</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 flex flex-col p-4 items-center">
-      <div className="flex items-center justify-between w-full mb-6">
+      <div className="flex items-center justify-between w-full mb-3">
         <button onClick={onBack} className="w-9 h-9 rounded-xl bg-white border border-border flex items-center justify-center">
           <X size={18} className="text-muted-foreground" />
         </button>
         <span className="text-sm text-muted-foreground">{index + 1} / {FLASHCARDS.length}</span>
-        <div />
+        <div className="flex items-center gap-1 text-amber-500 font-bold text-sm">🪙 +60</div>
+      </div>
+
+      {/* Progress bar */}
+      <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden mb-4">
+        <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${progress}%` }} />
       </div>
 
       <p className="text-muted-foreground text-sm mb-4">Tap card to flip</p>
 
-      <div className="w-full max-w-sm" style={{ perspective: 800 }} onClick={() => setFlipped(f => !f)}>
+      <div className="w-full max-w-sm" style={{ perspective: 800 }} onClick={handleFlip}>
         <motion.div
           animate={{ rotateY: flipped ? 180 : 0 }}
           transition={{ duration: 0.5 }}
-          style={{ transformStyle: "preserve-3d", position: "relative", height: 240 }}
+          style={{ transformStyle: "preserve-3d", position: "relative", height: 220 }}
         >
           <div className="absolute inset-0 rounded-3xl bg-white border-2 border-primary shadow-lg flex items-center justify-center p-6 text-center" style={{ backfaceVisibility: "hidden" }}>
             <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: "1.1rem", color: "var(--foreground)" }}>{card.front}</p>
@@ -205,21 +251,29 @@ function FlashcardGame({ onBack }: { onBack: () => void }) {
         </motion.div>
       </div>
 
-      <div className="flex gap-3 mt-8">
+      <div className="flex gap-3 mt-6 w-full max-w-sm">
         <button
-          onClick={() => { setIndex(i => Math.max(0, i - 1)); setFlipped(false); }}
+          onClick={() => goTo(index - 1)}
           disabled={index === 0}
           className="flex-1 py-3 rounded-2xl bg-white border-2 border-border text-muted-foreground font-semibold disabled:opacity-40"
         >
           ← Prev
         </button>
-        <button
-          onClick={() => { setIndex(i => Math.min(FLASHCARDS.length - 1, i + 1)); setFlipped(false); }}
-          disabled={index === FLASHCARDS.length - 1}
-          className="flex-1 py-3 rounded-2xl bg-primary text-white font-semibold disabled:opacity-40"
-        >
-          Next →
-        </button>
+        {index === FLASHCARDS.length - 1 ? (
+          <button
+            onClick={handleDone}
+            className="flex-1 py-3 rounded-2xl bg-green-500 text-white font-semibold"
+          >
+            Done ✓
+          </button>
+        ) : (
+          <button
+            onClick={() => goTo(index + 1)}
+            className="flex-1 py-3 rounded-2xl bg-primary text-white font-semibold"
+          >
+            Next →
+          </button>
+        )}
       </div>
     </div>
   );
@@ -240,7 +294,7 @@ export function GamesHub({ onEarnCoins }: Props) {
 
   if (activeGame === "flashcard") return (
     <div className="h-full flex flex-col">
-      <FlashcardGame onBack={() => setActiveGame(null)} />
+      <FlashcardGame onBack={() => setActiveGame(null)} onEarnCoins={onEarnCoins} />
     </div>
   );
 
