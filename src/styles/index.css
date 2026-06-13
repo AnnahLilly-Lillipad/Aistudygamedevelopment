@@ -2,92 +2,118 @@
 @import './tailwind.css';
 @import './theme.css';
 
-/* ── Dot-grid background (like graph paper) ─────────────── */
+/* ── Dot-grid background ─────────────────────────────────── */
 .dot-grid-bg {
-  background-color: var(--background);
-  background-image: radial-gradient(circle, #9dc4d8 1px, transparent 1px);
-  background-size: 22px 22px;
+  background-color: #cde5f0;
+  background-image: radial-gradient(circle, rgba(91,154,186,0.35) 1.5px, transparent 1.5px);
+  background-size: 20px 20px;
 }
 
 /* ── Retro OS window ─────────────────────────────────────── */
 .os-window {
   background: #ffffff;
-  border: 2px solid var(--border);
-  border-radius: 8px;
+  border: 2px solid #7ab2c8;
+  border-radius: 6px;
   overflow: hidden;
+  box-shadow: 3px 3px 0 rgba(91,154,186,0.25), inset 0 1px 0 rgba(255,255,255,0.8);
 }
 
 .os-titlebar {
-  background: linear-gradient(180deg, #c8dfe9 0%, #b0cfe0 100%);
-  border-bottom: 1px solid var(--titlebar-border);
-  padding: 5px 8px;
+  background: linear-gradient(180deg, #cde5f0 0%, #b0d0e2 100%);
+  border-bottom: 2px solid #7ab2c8;
+  padding: 4px 8px;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
+  min-height: 26px;
 }
 
 .os-titlebar-title {
-  font-family: 'Courier New', monospace;
-  font-size: 0.7rem;
-  font-weight: 700;
+  font-family: 'VT323', 'Courier New', monospace;
+  font-size: 0.9rem;
   color: #1a3d52;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   flex: 1;
   text-align: center;
+  line-height: 1;
 }
 
-.os-btn {
-  width: 11px;
-  height: 11px;
-  border-radius: 50%;
-  border: 1.5px solid rgba(26,61,82,0.25);
-  background: #ffffff;
-  flex-shrink: 0;
+/* Mac-style colored window buttons */
+.os-btn-red   { width: 11px; height: 11px; border-radius: 50%; background: #ff6b6b; border: 1.5px solid #e05555; flex-shrink: 0; }
+.os-btn-yellow{ width: 11px; height: 11px; border-radius: 50%; background: #ffd166; border: 1.5px solid #e0b050; flex-shrink: 0; }
+.os-btn-green { width: 11px; height: 11px; border-radius: 50%; background: #9dc4d8; border: 1.5px solid #7ab2c8; flex-shrink: 0; }
+
+/* Keep old .os-btn for backward compat */
+.os-btn { width: 11px; height: 11px; border-radius: 50%; background: #9dc4d8; border: 1.5px solid #7ab2c8; flex-shrink: 0; }
+
+/* ── Pixel divider ────────────────────────────────────────── */
+.pixel-divider {
+  height: 2px;
+  background: repeating-linear-gradient(
+    90deg,
+    #7ab2c8 0px, #7ab2c8 4px,
+    transparent 4px, transparent 8px
+  );
+  margin: 8px 0;
 }
 
-/* ── Retro flat button ───────────────────────────────────── */
+/* ── Retro flat button ────────────────────────────────────── */
 .retro-btn {
-  border: 2px solid var(--border);
-  background: var(--secondary);
-  color: var(--foreground);
-  font-family: 'Courier New', monospace;
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  padding: 6px 14px;
-  border-radius: 5px;
+  border: 2px solid #7ab2c8;
+  background: #ddeef6;
+  color: #1a3d52;
+  font-family: 'VT323', 'Courier New', monospace;
+  font-size: 0.9rem;
+  letter-spacing: 0.06em;
+  padding: 4px 12px;
+  border-radius: 4px;
   cursor: pointer;
-  transition: background 0.1s;
+  transition: background 0.1s, box-shadow 0.1s;
+  box-shadow: 2px 2px 0 #7ab2c8;
+  line-height: 1.2;
 }
 
 .retro-btn:hover {
-  background: var(--accent);
+  background: #cce0ec;
+  box-shadow: 1px 1px 0 #7ab2c8;
+  transform: translate(1px, 1px);
+}
+
+.retro-btn:active {
+  box-shadow: none;
+  transform: translate(2px, 2px);
 }
 
 .retro-btn-primary {
-  background: var(--primary);
+  background: #5b9aba;
   color: #fff;
   border-color: #3d7a98;
+  box-shadow: 2px 2px 0 #3d7a98;
 }
 
 .retro-btn-primary:hover {
   background: #4a88a8;
+  box-shadow: 1px 1px 0 #3d7a98;
 }
 
-/* ── Mono label ──────────────────────────────────────────── */
+/* ── VT323 mono label ─────────────────────────────────────── */
 .mono-label {
-  font-family: 'Courier New', monospace;
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-family: 'VT323', 'Courier New', monospace;
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--muted-foreground);
+  color: #4a7d8a;
 }
 
-/* ── Animations ──────────────────────────────────────────── */
+/* ── Animations ───────────────────────────────────────────── */
 @keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50%       { transform: translateY(-5px); }
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-7px); }
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0px) rotate(-1deg); }
+  50%       { transform: translateY(-5px) rotate(1deg); }
 }
 
 @keyframes shimmer {
@@ -101,33 +127,35 @@
   100% { box-shadow: 0 0 0 0 rgba(91,154,186,0); }
 }
 
-.animate-float {
-  animation: float 3s ease-in-out infinite;
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
 }
 
-.animate-pulse-ring {
-  animation: pulse-ring 2s ease infinite;
-}
+.animate-float  { animation: float 3s ease-in-out infinite; }
+.animate-float-slow { animation: float-slow 4s ease-in-out infinite; }
+.animate-pulse-ring { animation: pulse-ring 2s ease infinite; }
+.animate-blink  { animation: blink 1s step-end infinite; }
 
-/* ── Card elevation helpers ──────────────────────────────── */
+/* ── Card elevation helpers ───────────────────────────────── */
 .card-sm   { box-shadow: var(--shadow-sm); }
 .card-md   { box-shadow: var(--shadow-md); }
 .card-lg   { box-shadow: var(--shadow-lg); }
 .card-base { box-shadow: var(--shadow-card); }
 
-/* ── Glass ───────────────────────────────────────────────── */
+/* ── Glass ────────────────────────────────────────────────── */
 .glass {
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
 
-/* ── Safe area ───────────────────────────────────────────── */
+/* ── Safe area ────────────────────────────────────────────── */
 .safe-bottom {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-/* ── Hide scrollbar but keep scroll ─────────────────────── */
+/* ── Hide scrollbar but keep scroll ──────────────────────── */
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -135,3 +163,6 @@
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+/* ── VT323 text helper ────────────────────────────────────── */
+.vt { font-family: 'VT323', monospace; }
