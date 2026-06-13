@@ -1,4 +1,5 @@
-import { Target, Trophy, ChevronRight } from "lucide-react";
+import { motion } from "motion/react";
+import { ChevronRight, Target, Trophy, ArrowRight } from "lucide-react";
 import { CHARACTERS, ACHIEVEMENTS } from "../data/characters";
 import type { OwnedCard } from "../data/characters";
 import { CardImage } from "./CardImage";
@@ -8,6 +9,13 @@ const DAILY_QUESTS = [
   { id: 2, title: "Answer 10 quiz questions", reward: 30, icon: "❓", progress: 7, total: 10, done: false },
   { id: 3, title: "Win a battle", reward: 80, icon: "⚔️", progress: 1, total: 1, done: true },
   { id: 4, title: "Pull 3 gacha cards", reward: 20, icon: "✨", progress: 1, total: 3, done: false },
+];
+
+const QUICK_ACTIONS = [
+  { label: "Study", icon: "📚", gradient: "linear-gradient(135deg,#3b82f6,#4f46e5)", tab: "study", sub: "Earn coins & XP" },
+  { label: "Pull Gacha", icon: "✨", gradient: "linear-gradient(135deg,#8b5cf6,#ec4899)", tab: "gacha", sub: "New cards await" },
+  { label: "Games", icon: "🎮", gradient: "linear-gradient(135deg,#10b981,#059669)", tab: "games", sub: "Quiz & match" },
+  { label: "Battle", icon: "⚔️", gradient: "linear-gradient(135deg,#ef4444,#f97316)", tab: "battle", sub: "Win rewards" },
 ];
 
 interface Props {
@@ -22,233 +30,353 @@ interface Props {
   claimedQuests: number[];
   onClaimQuest: (id: number) => void;
   onEarnCoins: (amount: number, reason: string) => void;
+  totalBattleWins: number;
 }
 
-function xpForLevel(level: number): number {
-  return level * 1000;
-}
+function xpForLevel(level: number) { return level * 1000; }
 
-export function Dashboard({
-  coins,
-  ownedCards,
-  onNavigate,
-  username,
-  avatar,
-  xp,
-  level,
-  streak,
-  claimedQuests,
-  onClaimQuest,
-  onEarnCoins,
-}: Props) {
-  const recentChars = ownedCards
-    .slice(-6).reverse()
-    .map(oc => CHARACTERS.find(c => c.id === oc.characterId))
-    .filter(Boolean);
-
-  const earnedAchievements = ACHIEVEMENTS.filter(a => a.earned);
-
-  const xpNeeded = xpForLevel(level);
-  const xpProgress = Math.min(100, Math.round((xp / xpNeeded) * 100));
-
-  function handleClaimQuest(quest: typeof DAILY_QUESTS[0]) {
-    onClaimQuest(quest.id);
-    onEarnCoins(quest.reward, `${quest.icon} Quest complete! +${quest.reward} coins`);
-  }
-
+function SectionHeader({ icon, title, action, onAction }: { icon: React.ReactNode; title: string; action?: string; onAction?: () => void }) {
   return (
-    <div className="p-4 space-y-5 max-w-2xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-muted-foreground text-sm">
-            Welcome back, <span className="font-bold text-foreground">{username}</span>!
-          </p>
-          <h1 style={{ fontFamily: "'Outfit', sans-serif", fontSize: "1.5rem", fontWeight: 800, color: "var(--foreground)" }}>
-            StudyTales
-          </h1>
-        </div>
-        <div className="flex items-center gap-2 bg-white rounded-2xl px-4 py-2 shadow-sm border border-border">
-          <span className="text-amber-500 text-lg">🪙</span>
-          <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, color: "var(--foreground)", fontSize: "1.1rem" }}>
-            {coins.toLocaleString()}
+    <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center gap-2">
+        <div className="w-1 h-5 rounded-full" style={{ background: "var(--primary)" }} />
+        <div className="flex items-center gap-1.5">
+          {icon}
+          <span className="font-bold text-sm" style={{ color: "var(--foreground)", fontFamily: "'Outfit', sans-serif" }}>
+            {title}
           </span>
         </div>
       </div>
+      {action && (
+        <button
+          onClick={onAction}
+          className="flex items-center gap-1 text-xs font-semibold"
+          style={{ color: "var(--primary)" }}
+        >
+          {action}
+          <ChevronRight size={13} />
+        </button>
+      )}
+    </div>
+  );
+}
 
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-border text-center">
-          <div className="text-2xl mb-1">🔥</div>
-          <div style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: "1.3rem", color: "var(--foreground)" }}>
-            {streak}
-          </div>
-          <div className="text-xs text-muted-foreground">Day Streak</div>
-        </div>
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-border text-center">
-          <div className="text-2xl mb-1">🃏</div>
-          <div style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: "1.3rem", color: "var(--foreground)" }}>
-            {ownedCards.length}
-          </div>
-          <div className="text-xs text-muted-foreground">Cards</div>
-        </div>
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-border text-center">
-          <div className="text-xl mb-0.5">⚡</div>
-          <div style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: "1rem", color: "var(--foreground)" }}>
-            Lv.{level}
-          </div>
-          <div className="w-full bg-muted rounded-full h-1.5 mt-1 overflow-hidden">
+export function Dashboard({
+  coins, ownedCards, onNavigate,
+  username, avatar, xp, level, streak,
+  claimedQuests, onClaimQuest, onEarnCoins,
+  totalBattleWins,
+}: Props) {
+  const recentChars = ownedCards.slice(-6).reverse()
+    .map(oc => CHARACTERS.find(c => c.id === oc.characterId))
+    .filter(Boolean);
+
+  const xpNeeded = xpForLevel(level);
+  const xpProgress = Math.min(100, Math.round((xp / xpNeeded) * 100));
+  const earnedAchievements = ACHIEVEMENTS.filter(a => a.earned);
+
+  function handleClaimQuest(quest: typeof DAILY_QUESTS[0]) {
+    onClaimQuest(quest.id);
+    onEarnCoins(quest.reward, `${quest.icon} Quest complete!`);
+  }
+
+  return (
+    <div className="pb-6">
+
+      {/* ── Hero header ───────────────────────────────────── */}
+      <div
+        className="relative px-5 pt-10 pb-12 overflow-hidden"
+        style={{ background: "linear-gradient(135deg, #5b21b6 0%, #7c3aed 45%, #4338ca 100%)" }}
+      >
+        {/* Decorative blobs */}
+        <div className="absolute -right-10 -top-10 w-48 h-48 rounded-full" style={{ background: "rgba(255,255,255,0.06)" }} />
+        <div className="absolute right-4 bottom-4 w-20 h-20 rounded-full" style={{ background: "rgba(255,255,255,0.04)" }} />
+        <div className="absolute -left-6 top-12 w-24 h-24 rounded-full" style={{ background: "rgba(255,255,255,0.04)" }} />
+
+        {/* Top row */}
+        <div className="relative flex items-center justify-between mb-5">
+          <div className="flex items-center gap-3">
             <div
-              className="h-full rounded-full bg-amber-400 transition-all"
-              style={{ width: `${xpProgress}%` }}
+              className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl select-none shrink-0"
+              style={{ background: "rgba(255,255,255,0.18)", backdropFilter: "blur(8px)" }}
+            >
+              {avatar}
+            </div>
+            <div>
+              <p className="text-white/65 text-xs font-medium">Welcome back</p>
+              <p
+                className="text-white font-black text-xl leading-tight"
+                style={{ fontFamily: "'Outfit', sans-serif" }}
+              >
+                {username}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => onNavigate("gacha")}
+            className="flex items-center gap-1.5 rounded-2xl px-3 py-2"
+            style={{ background: "rgba(255,255,255,0.15)", backdropFilter: "blur(8px)" }}
+          >
+            <span className="text-amber-300 text-base">🪙</span>
+            <span className="text-white font-black text-base" style={{ fontFamily: "'Outfit', sans-serif" }}>
+              {coins.toLocaleString()}
+            </span>
+          </button>
+        </div>
+
+        {/* XP bar */}
+        <div
+          className="relative rounded-2xl p-4"
+          style={{ background: "rgba(255,255,255,0.1)", backdropFilter: "blur(8px)" }}
+        >
+          <div className="flex justify-between text-xs text-white/75 mb-2 font-semibold">
+            <span>Level {level} Scholar</span>
+            <span>{xp.toLocaleString()} / {xpNeeded.toLocaleString()} XP</span>
+          </div>
+          <div className="h-2.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.18)" }}>
+            <motion.div
+              className="h-full rounded-full"
+              style={{ background: "linear-gradient(90deg, #fbbf24, #f59e0b)" }}
+              initial={{ width: 0 }}
+              animate={{ width: `${xpProgress}%` }}
+              transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
             />
           </div>
-          <div className="text-xs text-muted-foreground mt-0.5">{xp.toLocaleString()} XP</div>
+          <p className="text-white/55 text-xs mt-1.5">
+            {xpNeeded - xp > 0 ? `${(xpNeeded - xp).toLocaleString()} XP to level ${level + 1}` : "Level up ready!"}
+          </p>
         </div>
       </div>
 
-      {/* Quick actions */}
-      <div className="grid grid-cols-2 gap-3">
+      {/* ── Floating stat cards ───────────────────────────── */}
+      <div className="px-4 -mt-5 grid grid-cols-3 gap-3 mb-5">
         {[
-          { label: "Start Studying", icon: "📚", color: "from-blue-500 to-indigo-600", tab: "study" },
-          { label: "Pull Gacha", icon: "✨", color: "from-purple-500 to-pink-500", tab: "gacha" },
-          { label: "Play Games", icon: "🎮", color: "from-green-500 to-emerald-600", tab: "games" },
-          { label: "Battle!", icon: "⚔️", color: "from-red-500 to-orange-500", tab: "battle" },
-        ].map(action => (
-          <button
-            key={action.label}
-            onClick={() => onNavigate(action.tab)}
-            className={`bg-gradient-to-br ${action.color} text-white rounded-2xl p-4 flex items-center gap-3 shadow-sm active:scale-95 transition-transform`}
+          { icon: "🔥", value: streak, label: "Day Streak" },
+          { icon: "🃏", value: ownedCards.length, label: "Cards" },
+          { icon: "⚔️", value: totalBattleWins, label: "Victories" },
+        ].map(stat => (
+          <motion.div
+            key={stat.label}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+            className="bg-white rounded-2xl p-3 text-center"
+            style={{ boxShadow: "0 4px 20px rgba(124,58,237,0.14), 0 1px 4px rgba(0,0,0,0.06)" }}
           >
-            <span className="text-2xl">{action.icon}</span>
-            <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700 }}>{action.label}</span>
-          </button>
+            <div className="text-2xl mb-0.5">{stat.icon}</div>
+            <div
+              className="font-black text-xl leading-tight"
+              style={{ fontFamily: "'Outfit', sans-serif", color: "var(--foreground)" }}
+            >
+              {stat.value}
+            </div>
+            <div className="text-xs mt-0.5" style={{ color: "var(--muted-foreground)" }}>{stat.label}</div>
+          </motion.div>
         ))}
       </div>
 
-      {/* Daily Quests */}
-      <div className="bg-white rounded-2xl shadow-sm border border-border overflow-hidden">
-        <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Target size={18} className="text-primary" />
-            <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, color: "var(--foreground)" }}>
-              Daily Quests
-            </span>
-          </div>
-          <span className="text-xs text-muted-foreground">Resets at midnight</span>
-        </div>
-        <div className="divide-y divide-border">
-          {DAILY_QUESTS.map(quest => {
-            const claimed = claimedQuests.includes(quest.id);
-            return (
-              <div key={quest.id} className="px-4 py-3 flex items-center gap-3">
-                <span className="text-xl">{quest.icon}</span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium" style={{ color: "var(--foreground)" }}>{quest.title}</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <div className="flex-1 bg-muted rounded-full h-1.5 overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-primary transition-all"
-                        style={{ width: `${(quest.progress / quest.total) * 100}%` }}
-                      />
-                    </div>
-                    <span className="text-xs text-muted-foreground whitespace-nowrap">
-                      {quest.progress}/{quest.total}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-amber-500 text-sm">🪙</span>
-                  <span className="text-sm font-semibold text-amber-600">{quest.reward}</span>
-                  {quest.done && !claimed && (
-                    <button
-                      onClick={() => handleClaimQuest(quest)}
-                      className="ml-1 bg-primary text-white text-xs px-2 py-1 rounded-lg font-semibold"
-                    >
-                      Claim
-                    </button>
-                  )}
-                  {claimed && <span className="ml-1 text-green-500 text-xs font-semibold">✓</span>}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      <div className="px-4 space-y-6">
 
-      {/* Recent Cards */}
-      {recentChars.length > 0 && (
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, color: "var(--foreground)" }}>
-              Recent Cards
-            </span>
-            <button
-              onClick={() => onNavigate("collection")}
-              className="text-primary text-sm font-semibold flex items-center gap-1"
-            >
-              View all <ChevronRight size={14} />
-            </button>
-          </div>
-          <div className="flex gap-2 overflow-x-auto pb-2">
-            {recentChars.map((char, i) => char && (
-              <div key={i} className="flex-shrink-0 w-16">
-                <CardImage character={char} size="xs" showName />
-              </div>
+        {/* ── Quick actions ─────────────────────────────────── */}
+        <section>
+          <SectionHeader icon={<span className="text-sm">🚀</span>} title="Quick Actions" />
+          <div className="grid grid-cols-2 gap-3">
+            {QUICK_ACTIONS.map((action, i) => (
+              <motion.button
+                key={action.label}
+                onClick={() => onNavigate(action.tab)}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.25, delay: i * 0.05 }}
+                className="relative overflow-hidden rounded-2xl p-4 text-left active:scale-95 transition-transform"
+                style={{
+                  background: action.gradient,
+                  boxShadow: "0 4px 16px rgba(0,0,0,0.15)",
+                }}
+              >
+                <div className="absolute -right-2 -bottom-2 text-5xl opacity-20 select-none">
+                  {action.icon}
+                </div>
+                <div className="text-2xl mb-2">{action.icon}</div>
+                <p
+                  className="text-white font-black text-base leading-tight"
+                  style={{ fontFamily: "'Outfit', sans-serif" }}
+                >
+                  {action.label}
+                </p>
+                <p className="text-white/70 text-xs mt-0.5 font-medium">{action.sub}</p>
+              </motion.button>
             ))}
           </div>
-        </div>
-      )}
+        </section>
 
-      {/* Achievements */}
-      <div className="bg-white rounded-2xl shadow-sm border border-border overflow-hidden">
-        <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Trophy size={18} className="text-amber-500" />
-            <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, color: "var(--foreground)" }}>
-              Achievements
-            </span>
+        {/* ── Daily Quests ──────────────────────────────────── */}
+        <section>
+          <SectionHeader
+            icon={<Target size={15} style={{ color: "var(--primary)" }} />}
+            title="Daily Quests"
+            action="Resets midnight"
+          />
+          <div
+            className="bg-white rounded-2xl overflow-hidden"
+            style={{ boxShadow: "var(--shadow-card)" }}
+          >
+            {DAILY_QUESTS.map((quest, i) => {
+              const claimed = claimedQuests.includes(quest.id);
+              return (
+                <div
+                  key={quest.id}
+                  className="px-4 py-3 flex items-center gap-3"
+                  style={{ borderBottom: i < DAILY_QUESTS.length - 1 ? "1px solid rgba(124,58,237,0.08)" : "none" }}
+                >
+                  <span className="text-xl shrink-0">{quest.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold truncate" style={{ color: "var(--foreground)" }}>
+                      {quest.title}
+                    </p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div
+                        className="flex-1 rounded-full overflow-hidden"
+                        style={{ height: 5, background: "var(--muted)" }}
+                      >
+                        <div
+                          className="h-full rounded-full transition-all"
+                          style={{
+                            width: `${(quest.progress / quest.total) * 100}%`,
+                            background: quest.done ? "#10b981" : "var(--primary)",
+                          }}
+                        />
+                      </div>
+                      <span className="text-xs shrink-0" style={{ color: "var(--muted-foreground)" }}>
+                        {quest.progress}/{quest.total}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-xs font-bold" style={{ color: "#d97706" }}>🪙{quest.reward}</span>
+                    {quest.done && !claimed ? (
+                      <button
+                        onClick={() => handleClaimQuest(quest)}
+                        className="text-xs font-bold text-white rounded-xl px-2.5 py-1.5 active:scale-95 transition-transform"
+                        style={{ background: "linear-gradient(135deg,#7c3aed,#6d28d9)", boxShadow: "0 2px 8px rgba(124,58,237,0.35)" }}
+                      >
+                        Claim
+                      </button>
+                    ) : claimed ? (
+                      <span className="w-6 h-6 rounded-full flex items-center justify-center" style={{ background: "#dcfce7" }}>
+                        <span className="text-green-600 text-xs">✓</span>
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+              );
+            })}
           </div>
-          <span className="text-xs text-muted-foreground">{earnedAchievements.length}/{ACHIEVEMENTS.length}</span>
-        </div>
-        <div className="flex gap-3 overflow-x-auto p-4">
-          {ACHIEVEMENTS.map(ach => (
-            <div
-              key={ach.id}
-              className={`flex-shrink-0 flex flex-col items-center gap-1 w-16 ${!ach.earned ? "opacity-40 grayscale" : ""}`}
-            >
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${ach.earned ? "bg-amber-50 border-2 border-amber-200" : "bg-muted border-2 border-border"}`}>
-                {ach.icon}
-              </div>
-              <p className="text-center text-muted-foreground" style={{ fontSize: "0.6rem", lineHeight: 1.2 }}>
-                {ach.title}
-              </p>
+        </section>
+
+        {/* ── Recent Cards ──────────────────────────────────── */}
+        {recentChars.length > 0 && (
+          <section>
+            <SectionHeader
+              icon={<span className="text-sm">🃏</span>}
+              title="Recent Cards"
+              action="View all"
+              onAction={() => onNavigate("collection")}
+            />
+            <div className="flex gap-2.5 overflow-x-auto pb-1 -mx-0">
+              {recentChars.map((char, i) => char && (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, x: 12 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.25, delay: i * 0.05 }}
+                  className="flex-shrink-0 w-[72px]"
+                >
+                  <CardImage character={char} size="xs" showName />
+                </motion.div>
+              ))}
+              <button
+                onClick={() => onNavigate("collection")}
+                className="flex-shrink-0 w-[72px] rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-1"
+                style={{ borderColor: "rgba(124,58,237,0.25)", minHeight: 64 }}
+              >
+                <ArrowRight size={14} style={{ color: "var(--primary)" }} />
+                <span className="text-xs font-bold" style={{ color: "var(--primary)", fontSize: "0.5rem" }}>ALL</span>
+              </button>
             </div>
-          ))}
-        </div>
-      </div>
+          </section>
+        )}
 
-      {/* Expedition */}
-      <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl p-4 text-white shadow-sm">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-white/80 text-sm">Expedition Returns</p>
-            <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: "1rem" }}>
-              3 cards on mission
-            </p>
-            <p className="text-white/70 text-xs mt-1">Ready in 2h 15m</p>
+        {/* ── Achievements ──────────────────────────────────── */}
+        <section>
+          <SectionHeader
+            icon={<Trophy size={15} style={{ color: "#f59e0b" }} />}
+            title="Achievements"
+            action={`${earnedAchievements.length}/${ACHIEVEMENTS.length}`}
+          />
+          <div
+            className="bg-white rounded-2xl overflow-hidden"
+            style={{ boxShadow: "var(--shadow-card)" }}
+          >
+            <div className="flex gap-4 p-4 overflow-x-auto">
+              {ACHIEVEMENTS.map(ach => (
+                <div
+                  key={ach.id}
+                  className="flex-shrink-0 flex flex-col items-center gap-1.5"
+                  style={{ width: 52, opacity: ach.earned ? 1 : 0.35 }}
+                >
+                  <div
+                    className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
+                    style={{
+                      background: ach.earned ? "linear-gradient(135deg,#fef3c7,#fde68a)" : "var(--muted)",
+                      border: ach.earned ? "2px solid #fbbf24" : "2px solid var(--border)",
+                      boxShadow: ach.earned ? "0 2px 8px rgba(251,191,36,0.3)" : "none",
+                    }}
+                  >
+                    {ach.icon}
+                  </div>
+                  <p
+                    className="text-center leading-tight"
+                    style={{ fontSize: "0.55rem", color: "var(--muted-foreground)", fontWeight: 600 }}
+                  >
+                    {ach.title}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="flex flex-col items-center gap-1">
-            <span className="text-4xl">🗺️</span>
-            <button
-              disabled
-              className="bg-white/40 text-white/60 text-xs font-bold px-3 py-1 rounded-lg cursor-not-allowed"
-              title="Expedition not ready yet"
-            >
-              ⏰ 2h 15m
-            </button>
+        </section>
+
+        {/* ── Expedition ────────────────────────────────────── */}
+        <section>
+          <SectionHeader icon={<span className="text-sm">🗺️</span>} title="Expeditions" />
+          <div
+            className="relative overflow-hidden rounded-2xl p-5 text-white"
+            style={{
+              background: "linear-gradient(135deg, #4338ca 0%, #6d28d9 50%, #7e22ce 100%)",
+              boxShadow: "0 8px 24px rgba(109,40,217,0.3)",
+            }}
+          >
+            <div className="absolute -right-6 -top-6 w-36 h-36 rounded-full" style={{ background: "rgba(255,255,255,0.05)" }} />
+            <div className="flex items-center justify-between relative">
+              <div>
+                <p className="text-white/70 text-xs font-semibold mb-0.5">EXPEDITION ACTIVE</p>
+                <p className="text-white font-black text-lg" style={{ fontFamily: "'Outfit', sans-serif" }}>
+                  3 cards on mission
+                </p>
+                <div
+                  className="inline-flex items-center gap-1.5 mt-2 rounded-xl px-3 py-1.5"
+                  style={{ background: "rgba(255,255,255,0.12)" }}
+                >
+                  <span className="text-amber-300 text-sm">⏰</span>
+                  <span className="text-white text-xs font-bold">Returns in 2h 15m</span>
+                </div>
+              </div>
+              <div className="text-5xl select-none">🗺️</div>
+            </div>
           </div>
-        </div>
+        </section>
+
       </div>
     </div>
   );

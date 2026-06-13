@@ -299,8 +299,18 @@ export function GamesHub({ onEarnCoins }: Props) {
   );
 
   return (
-    <div className="p-4 space-y-4 max-w-2xl mx-auto">
-      <h2 style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: "1.3rem", color: "var(--foreground)" }}>Study Games</h2>
+    <div className="max-w-2xl mx-auto">
+      {/* Page header */}
+      <div
+        className="relative px-5 pt-9 pb-5 overflow-hidden mb-4"
+        style={{ background: "linear-gradient(135deg, #065f46 0%, #059669 45%, #10b981 100%)" }}
+      >
+        <div className="absolute -right-6 -top-6 w-32 h-32 rounded-full" style={{ background: "rgba(255,255,255,0.07)" }} />
+        <p className="text-white/60 text-xs font-bold tracking-widest mb-0.5">GAMES</p>
+        <h1 className="text-white font-black text-2xl relative" style={{ fontFamily: "'Outfit', sans-serif" }}>Games Hub</h1>
+        <p className="text-white/65 text-sm mt-1 relative">Quiz · Flashcards · Match · More soon</p>
+      </div>
+      <div className="px-4 space-y-4">
       <div className="grid grid-cols-2 gap-3">
         {GAMES.map(game => (
           <button
@@ -336,6 +346,7 @@ export function GamesHub({ onEarnCoins }: Props) {
             </div>
           ))}
         </div>
+      </div>
       </div>
     </div>
   );

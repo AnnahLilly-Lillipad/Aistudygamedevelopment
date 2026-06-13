@@ -684,12 +684,27 @@ export function StudyMode({ onEarnCoins }: Props) {
 
   return (
     <div className="h-full flex flex-col">
+      {/* Page header */}
+      <div
+        className="relative px-5 pt-9 pb-5 overflow-hidden"
+        style={{ background: "linear-gradient(135deg, #1d4ed8 0%, #4338ca 50%, #7c3aed 100%)" }}
+      >
+        <div className="absolute -right-6 -top-6 w-32 h-32 rounded-full" style={{ background: "rgba(255,255,255,0.06)" }} />
+        <div className="absolute left-4 -bottom-4 w-16 h-16 rounded-full" style={{ background: "rgba(255,255,255,0.04)" }} />
+        <p className="text-white/60 text-xs font-bold tracking-widest mb-0.5">STUDY MODE</p>
+        <h1 className="text-white font-black text-2xl relative" style={{ fontFamily: "'Outfit', sans-serif" }}>Study Hub</h1>
+        <p className="text-white/65 text-sm mt-1 relative">Flashcards · Pomodoro · Notes</p>
+      </div>
+
       {/* Tab nav */}
-      <div className="flex gap-1 p-4 pb-2">
+      <div className="flex gap-1 p-3 pb-2 bg-white border-b" style={{ borderColor: "rgba(124,58,237,0.1)" }}>
         {tabs.map(tab => (
           <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-            className={`flex-1 py-2 px-3 rounded-xl text-sm font-semibold transition-colors ${activeTab === tab.id ? "bg-primary text-white shadow-sm" : "bg-white text-muted-foreground border border-border"}`}
-            style={{ fontFamily: "'Outfit', sans-serif" }}>
+            className={`flex-1 py-2 px-3 rounded-xl text-sm font-semibold transition-all ${activeTab === tab.id ? "text-white shadow-sm" : "text-muted-foreground"}`}
+            style={{
+              fontFamily: "'Outfit', sans-serif",
+              background: activeTab === tab.id ? "var(--primary)" : "transparent",
+            }}>
             {tab.icon} {tab.label}
           </button>
         ))}
