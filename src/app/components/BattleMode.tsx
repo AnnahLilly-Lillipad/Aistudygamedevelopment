@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { motion } from "motion/react";
-import { Swords, Shield, Zap, X } from "lucide-react";
+import { Swords, Shield, Zap, X, Sparkles } from "lucide-react";
 import { CHARACTERS, type Character, type OwnedCard } from "../data/characters";
 import { CardImage } from "./CardImage";
 
@@ -25,7 +25,7 @@ const ENEMY_TEAMS: { name: string; chars: number[] }[] = [
   { name: "Hunting Dogs", chars: [23, 24, 25] },
 ];
 
-interface BattleCharState { char: Character; hp: number; maxHp: number; }
+interface BattleCharState { char: Character; hp: number; maxHp: number; effectiveAtk: number; isAwakened: boolean; }
 
 interface Props {
   ownedCards: OwnedCard[];
@@ -57,10 +57,25 @@ export function BattleMode({ ownedCards, onEarnCoins, onRecordWin }: Props) {
 
   const startBattle = (team = playerTeam) => {
     const enemy = ENEMY_TEAMS[enemyTeamIdx];
-    const init = (ids: number[]): BattleCharState[] =>
-      ids.map(id => { const char = CHARACTERS.find(c => c.id === id)!; return { char, hp: char.hp, maxHp: char.hp }; });
-    setPlayerStates(init(team));
-    setEnemyStates(init(enemy.chars));
+
+    const initPlayer = (ids: number[]): BattleCharState[] =>
+      ids.map(id => {
+        const char = CHARACTERS.find(c => c.id === id)!;
+        const ownedCard = ownedCards.find(oc => oc.characterId === id);
+        const isAwakened = ownedCard?.awakened === true;
+        const hp = isAwakened ? Math.floor(char.hp * 1.25) : char.hp;
+        const effectiveAtk = isAwakened ? Math.floor(char.atk * 1.5) : char.atk;
+        return { char, hp, maxHp: hp, effectiveAtk, isAwakened };
+      });
+
+    const initEnemy = (ids: number[]): BattleCharState[] =>
+      ids.map(id => {
+        const char = CHARACTERS.find(c => c.id === id)!;
+        return { char, hp: char.hp, maxHp: char.hp, effectiveAtk: char.atk, isAwakened: false };
+      });
+
+    setPlayerStates(initPlayer(team));
+    setEnemyStates(initEnemy(enemy.chars));
     setTurn("player");
     setLog(["Battle started! Your turn."]);
     setWinner(null);
@@ -90,12 +105,15 @@ export function BattleMode({ ownedCards, onEarnCoins, onRecordWin }: Props) {
     let dmg = 0;
     if (action === "attack") {
       const mult = getMultiplier(attacker.char, target.char);
-      dmg = Math.floor(attacker.char.atk * mult * (0.9 + Math.random() * 0.2));
-      addLog(`${attacker.char.displayName} attacks! ${mult > 1 ? "⚡ Effective!" : mult < 1 ? "🔻 Not very effective…" : ""} -${dmg.toLocaleString()}`);
+      dmg = Math.floor(attacker.effectiveAtk * mult * (0.9 + Math.random() * 0.2));
+      const eff = mult > 1 ? " ⚡ Effective!" : mult < 1 ? " 🔻 Resisted…" : "";
+      addLog(`${attacker.char.displayName} attacks!${eff} -${dmg.toLocaleString()}`);
       setIsDefending(false);
     } else if (action === "skill") {
-      dmg = Math.floor(attacker.char.atk * 2.2 * (0.9 + Math.random() * 0.2));
-      addLog(`⚡ ${attacker.char.displayName} uses ${attacker.char.skill}! -${dmg.toLocaleString()}`);
+      dmg = Math.floor(attacker.effectiveAtk * 2.2 * (0.9 + Math.random() * 0.2));
+      const skillName = attacker.isAwakened && attacker.char.awakenedSkill ? attacker.char.awakenedSkill : attacker.char.skill;
+      const prefix = attacker.isAwakened ? "✦ " : "⚡ ";
+      addLog(`${prefix}${attacker.char.displayName} uses ${skillName}! -${dmg.toLocaleString()}`);
       setSkillCooldown(3);
       setIsDefending(false);
     } else {
@@ -199,7 +217,17 @@ export function BattleMode({ ownedCards, onEarnCoins, onRecordWin }: Props) {
             <div className="flex gap-2 mb-3">
               {playerTeam.map(id => {
                 const char = CHARACTERS.find(c => c.id === id)!;
-                return <div key={id} className="flex-1"><CardImage character={char} size="sm" showName /></div>;
+                const isAwakened = ownedCards.find(oc => oc.characterId === id)?.awakened === true;
+                return (
+                  <div key={id} className="flex-1 relative">
+                    <CardImage character={char} size="sm" showName />
+                    {isAwakened && (
+                      <div className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center" style={{ background: "#f59e0b", boxShadow: "0 0 8px rgba(251,191,36,0.7)" }}>
+                        <Sparkles size={10} className="text-white" />
+                      </div>
+                    )}
+                  </div>
+                );
               })}
             </div>
           )}
@@ -210,11 +238,33 @@ export function BattleMode({ ownedCards, onEarnCoins, onRecordWin }: Props) {
             </div>
           ) : (
             <div className="grid grid-cols-5 gap-2 max-h-64 overflow-y-auto">
-              {ownedChars.map(char => (
-                <button key={char.id} onClick={() => toggleMember(char.id)} className={`rounded-xl overflow-hidden border-2 transition-all ${playerTeam.includes(char.id) ? "border-primary scale-105" : "border-transparent"}`}>
-                  <CardImage character={char} size="xs" showName />
-                </button>
-              ))}
+              {ownedChars.map(char => {
+                const isAwakened = ownedCards.find(oc => oc.characterId === char.id)?.awakened === true;
+                const isSelected = playerTeam.includes(char.id);
+                return (
+                  <button
+                    key={char.id}
+                    onClick={() => toggleMember(char.id)}
+                    className="relative rounded-xl overflow-visible transition-all"
+                    style={{
+                      border: `2px solid ${isSelected ? (isAwakened ? "#f59e0b" : "var(--primary)") : "transparent"}`,
+                      transform: isSelected ? "scale(1.06)" : "scale(1)",
+                    }}
+                  >
+                    <div className="rounded-[10px] overflow-hidden">
+                      <CardImage character={char} size="xs" showName />
+                    </div>
+                    {isAwakened && (
+                      <div
+                        className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center z-10"
+                        style={{ background: "#f59e0b", boxShadow: "0 0 6px rgba(251,191,36,0.8)" }}
+                      >
+                        <Sparkles size={8} className="text-white" />
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>

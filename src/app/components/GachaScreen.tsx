@@ -23,17 +23,19 @@ function rollRarity(rates: Record<Rarity, number>): Rarity {
   return "R";
 }
 
-function pullCard(banner: typeof BANNERS[0], pity: number): Character {
+function pullCard(banner: typeof BANNERS[0], pity: number, awakenedIds: Set<number>): Character {
   const rarity = pity >= 100 ? "UR" : rollRarity(banner.rates);
-  const pool = banner.pool
+  const candidatePool = banner.pool
     ? CHARACTERS.filter(c => banner.pool!.includes(c.id) && c.rarity === rarity)
     : CHARACTERS.filter(c => !c.banner && c.rarity === rarity);
-  if (pool.length === 0) {
-    const fallback = CHARACTERS.filter(c => c.rarity === rarity);
+  const pool = candidatePool.filter(c => !awakenedIds.has(c.id));
+  const finalPool = pool.length > 0 ? pool : candidatePool;
+  if (finalPool.length === 0) {
+    const fallback = CHARACTERS.filter(c => c.rarity === "R");
     return fallback[Math.floor(Math.random() * fallback.length)];
   }
   const weighted: Character[] = [];
-  pool.forEach(c => {
+  finalPool.forEach(c => {
     const times = banner.featured.includes(c.id) ? 3 : 1;
     for (let i = 0; i < times; i++) weighted.push(c);
   });
@@ -104,13 +106,14 @@ function CardReveal({ char, index, revealed, onClick, size = "sm" }: CardRevealP
 
 interface Props {
   coins: number;
+  ownedCards: OwnedCard[];
   onSpend: (amount: number) => void;
   onGain: (cards: OwnedCard[]) => void;
   pityCount: number;
   setPityCount: (n: number) => void;
 }
 
-export function GachaScreen({ coins, onSpend, onGain, pityCount, setPityCount }: Props) {
+export function GachaScreen({ coins, ownedCards, onSpend, onGain, pityCount, setPityCount }: Props) {
   const [pulledCards, setPulledCards] = useState<Character[]>([]);
   const [revealed, setRevealed] = useState<boolean[]>([]);
   const [showResults, setShowResults] = useState(false);
@@ -133,11 +136,12 @@ export function GachaScreen({ coins, onSpend, onGain, pityCount, setPityCount }:
     if (coins < cost) return;
     onSpend(cost);
 
+    const awakenedIds = new Set(ownedCards.filter(oc => oc.awakened).map(oc => oc.characterId));
     let newPity = pityCount;
     const cards: Character[] = [];
 
     for (let i = 0; i < count; i++) {
-      const card = pullCard(banner, newPity);
+      const card = pullCard(banner, newPity, awakenedIds);
       cards.push(card);
       newPity = card.rarity === "UR" ? 0 : newPity + 1;
     }

@@ -88,6 +88,7 @@ export default function App() {
         return (
           <GachaScreen
             coins={state.coins}
+            ownedCards={state.ownedCards}
             onSpend={gs.spendCoins}
             onGain={gs.gainCards}
             pityCount={state.pityCount}
