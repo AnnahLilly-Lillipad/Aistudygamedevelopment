@@ -1,6 +1,5 @@
 import { useState, useCallback } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Home, BookOpen, Gamepad2, Sparkles, Sword, MessageCircle, User, Library } from "lucide-react";
 import { Dashboard } from "./components/Dashboard";
 import { StudyMode } from "./components/StudyMode";
 import { GamesHub } from "./components/GamesHub";
@@ -14,15 +13,15 @@ import { useGameState } from "./hooks/useGameState";
 
 type Tab = "home" | "study" | "games" | "gacha" | "collection" | "battle" | "chat" | "profile";
 
-const NAV_ITEMS: { id: Tab; label: string; icon: React.ReactNode }[] = [
-  { id: "home",       label: "Home",   icon: <Home size={15} /> },
-  { id: "study",      label: "Study",  icon: <BookOpen size={15} /> },
-  { id: "games",      label: "Games",  icon: <Gamepad2 size={15} /> },
-  { id: "gacha",      label: "Gacha",  icon: <Sparkles size={15} /> },
-  { id: "collection", label: "Cards",  icon: <Library size={15} /> },
-  { id: "battle",     label: "Battle", icon: <Sword size={15} /> },
-  { id: "chat",       label: "Chat",   icon: <MessageCircle size={15} /> },
-  { id: "profile",    label: "Me",     icon: <User size={15} /> },
+const NAV_ITEMS: { id: Tab; emoji: string; label: string }[] = [
+  { id: "home",       emoji: "🏠", label: "Home"   },
+  { id: "study",      emoji: "📚", label: "Study"  },
+  { id: "games",      emoji: "🎮", label: "Games"  },
+  { id: "gacha",      emoji: "🐚", label: "Gacha"  },
+  { id: "collection", emoji: "🃏", label: "Cards"  },
+  { id: "battle",     emoji: "⚔️", label: "Battle" },
+  { id: "chat",       emoji: "💬", label: "Chat"   },
+  { id: "profile",    emoji: "🌊", label: "Me"     },
 ];
 
 interface ToastNotif { id: string; message: string; coins?: number; }
@@ -51,7 +50,7 @@ export default function App() {
   const handleRecordWin = useCallback(() => {
     gs.recordBattleWin();
     gs.earnXp(100);
-    showToast("⚔ Victory! +100 XP");
+    showToast("⚔️ Victory! +100 XP");
   }, [gs, showToast]);
 
   const navigate = useCallback((tab: string) => setActiveTab(tab as Tab), []);
@@ -108,27 +107,23 @@ export default function App() {
       className="size-full flex flex-col overflow-hidden dot-grid-bg"
       style={{ maxWidth: 480, margin: "0 auto" }}
     >
-      {/* ── Top system bar ─────────────────────────────────── */}
-      <div
-        style={{
-          background: "linear-gradient(180deg, #cde5f0 0%, #b8d5e5 100%)",
-          borderBottom: "2px solid #7ab2c8",
-          padding: "3px 10px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          flexShrink: 0,
-        }}
-      >
+      {/* ── Top system bar — coastal style ─────────────────── */}
+      <div style={{
+        background: "linear-gradient(180deg, #b8ddf0 0%, #a8d0e6 100%)",
+        borderBottom: "2px solid #7ab2c8",
+        padding: "3px 10px",
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        flexShrink: 0,
+      }}>
         <span style={{ fontFamily: "'VT323', monospace", fontSize: "0.85rem", color: "#1a3d52", letterSpacing: "0.08em" }}>
-          ✦ STUDYTALES
+          🌊 STUDYTALES ⛵
         </span>
         <span style={{ fontFamily: "'VT323', monospace", fontSize: "0.75rem", color: "#5a7d8a", letterSpacing: "0.04em" }}>
           {gs.user.username} · 🪙{state.coins.toLocaleString()}
         </span>
       </div>
 
-      {/* ── Scrollable content ─────────────────────────────── */}
+      {/* ── Scrollable content ──────────────────────────────── */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden">
         <AnimatePresence mode="wait">
           <motion.div
@@ -144,13 +139,12 @@ export default function App() {
         </AnimatePresence>
       </div>
 
-      {/* ── Retro nav taskbar ──────────────────────────────── */}
+      {/* ── Coastal nav bar ─────────────────────────────────── */}
       <nav
         className="flex-shrink-0 safe-bottom"
         style={{
-          background: "linear-gradient(180deg, #c4dcea 0%, #aecfdf 100%)",
+          background: "linear-gradient(180deg, #cde5f0 0%, #b8d5e5 100%)",
           borderTop: "2px solid #7ab2c8",
-          boxShadow: "0 -2px 0 rgba(255,255,255,0.4) inset",
         }}
       >
         <div style={{ display: "flex" }}>
@@ -162,45 +156,28 @@ export default function App() {
                 onClick={() => setActiveTab(item.id)}
                 style={{
                   flex: 1,
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  padding: "6px 2px 4px",
-                  position: "relative",
-                  WebkitTapHighlightColor: "transparent",
-                  background: active
-                    ? "linear-gradient(180deg, #eef7fc 0%, #d8edf7 100%)"
-                    : "transparent",
-                  borderRight: idx < NAV_ITEMS.length - 1 ? "1px solid rgba(122,178,200,0.4)" : "none",
-                  borderTop: active ? "2px solid #5b9aba" : "2px solid transparent",
+                  display: "flex", flexDirection: "column", alignItems: "center",
+                  justifyContent: "center", padding: "5px 2px 4px",
+                  position: "relative", WebkitTapHighlightColor: "transparent",
+                  background: active ? "linear-gradient(180deg, #eef7fc 0%, #d8edf7 100%)" : "transparent",
+                  borderRight: idx < NAV_ITEMS.length - 1 ? "1px solid rgba(122,178,200,0.35)" : "none",
+                  borderTop: active ? "2.5px solid #5b9aba" : "2.5px solid transparent",
                   boxShadow: active ? "inset 0 1px 0 rgba(255,255,255,0.6)" : "none",
-                  transition: "background 0.1s",
-                  cursor: "pointer",
-                  gap: 2,
+                  transition: "background 0.1s", cursor: "pointer", gap: 1,
                 }}
               >
-                <div style={{ color: active ? "#1a3d52" : "#5a7d8a" }}>
-                  {item.icon}
-                </div>
-
+                <span style={{ fontSize: "0.9rem", lineHeight: 1 }}>{item.emoji}</span>
                 {item.id === "gacha" && (
                   <span style={{
-                    position: "absolute", top: 4, right: "18%",
+                    position: "absolute", top: 3, right: "14%",
                     width: 6, height: 6, borderRadius: "50%",
                     background: "#d94040", border: "1px solid white",
                   }} />
                 )}
-
-                <span
-                  style={{
-                    fontFamily: "'VT323', monospace",
-                    fontSize: "0.6rem",
-                    letterSpacing: "0.05em",
-                    color: active ? "#1a3d52" : "#5a7d8a",
-                    lineHeight: 1,
-                  }}
-                >
+                <span style={{
+                  fontFamily: "'VT323', monospace", fontSize: "0.55rem", letterSpacing: "0.04em",
+                  color: active ? "#1a3d52" : "#5a7d8a", lineHeight: 1,
+                }}>
                   {item.label.toUpperCase()}
                 </span>
               </button>
@@ -209,22 +186,12 @@ export default function App() {
         </div>
       </nav>
 
-      {/* ── Toast notifications ──────────────────────────────── */}
-      <div
-        style={{
-          position: "fixed",
-          top: 36,
-          left: "50%",
-          transform: "translateX(-50%)",
-          zIndex: 100,
-          display: "flex",
-          flexDirection: "column",
-          gap: 6,
-          pointerEvents: "none",
-          maxWidth: 300,
-          width: "90%",
-        }}
-      >
+      {/* ── Toast notifications ─────────────────────────────── */}
+      <div style={{
+        position: "fixed", top: 36, left: "50%", transform: "translateX(-50%)",
+        zIndex: 100, display: "flex", flexDirection: "column", gap: 6,
+        pointerEvents: "none", maxWidth: 300, width: "90%",
+      }}>
         <AnimatePresence>
           {toasts.map(toast => (
             <motion.div
@@ -233,8 +200,11 @@ export default function App() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -10, scale: 0.95, transition: { duration: 0.15 } }}
               transition={{ type: "spring", stiffness: 350, damping: 28 }}
-              className="os-window"
-              style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", boxShadow: "3px 3px 0 rgba(91,154,186,0.25)" }}
+              style={{
+                background: "#ddeef6", border: "2px solid #7ab2c8",
+                borderRadius: 6, boxShadow: "3px 3px 0 rgba(91,154,186,0.3)",
+                display: "flex", alignItems: "center", gap: 8, padding: "6px 10px",
+              }}
             >
               {toast.coins !== undefined && (
                 <span style={{

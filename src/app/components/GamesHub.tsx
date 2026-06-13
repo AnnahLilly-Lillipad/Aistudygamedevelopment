@@ -393,83 +393,127 @@ export function GamesHub({ onEarnCoins }: Props) {
     return <div className="h-full flex flex-col"><StudySetPicker gameId={pendingGame} onCancel={() => setPendingGame(null)} onSelect={(set) => handleSelectSet(pendingGame, set)} /></div>;
   }
 
+  const GAME_PALETTES = [
+    { bg: "#dbeafe", border: "#3b82f6", shadow: "#1d4ed8", text: "#1e3a8a" },
+    { bg: "#ede9fe", border: "#7c3aed", shadow: "#5b21b6", text: "#3b0764" },
+    { bg: "#d1fae5", border: "#059669", shadow: "#047857", text: "#064e3b" },
+    { bg: "#fef3c7", border: "#d97706", shadow: "#b45309", text: "#78350f" },
+    { bg: "#fce7f3", border: "#db2777", shadow: "#9d174d", text: "#500724" },
+    { bg: "#fee2e2", border: "#dc2626", shadow: "#b91c1c", text: "#7f1d1d" },
+    { bg: "#cffafe", border: "#0891b2", shadow: "#0e7490", text: "#164e63" },
+  ];
+
   return (
     <div className="max-w-2xl mx-auto pb-6">
-      {/* Header */}
-      <div className="os-window mx-3 mt-3 mb-3">
-        <div className="os-titlebar">
-          <div className="os-btn-red" /><div className="os-btn-yellow" /><div className="os-btn-green" />
-          <span className="os-titlebar-title">GAMES.EXE</span>
-        </div>
-        <div style={{ background: "#ddeef6", padding: "10px 12px" }}>
-          <div className="flex items-center gap-2 mb-1">
-            <Gamepad2 size={14} style={{ color: "#5b9aba" }} />
-            <span className="mono-label" style={{ fontSize: "0.65rem" }}>GAME ROOM</span>
+
+      {/* ── Header — boardwalk sign style ──────────────────────────── */}
+      <div style={{
+        background: "linear-gradient(135deg, #1a3d52 0%, #2a5a70 100%)",
+        borderBottom: "3px solid #fbbf24",
+        padding: "10px 14px", marginBottom: 12,
+      }}>
+        <p style={{ fontFamily: "'VT323', monospace", fontSize: "1.5rem", color: "#fbbf24", letterSpacing: "0.1em", lineHeight: 1 }}>
+          🎮 GAME ROOM 🎮
+        </p>
+        <p style={{ fontFamily: "'VT323', monospace", fontSize: "0.75rem", color: "#7ab2c8", letterSpacing: "0.05em" }}>
+          🌊 pick a game · study · earn coins 🪙
+        </p>
+      </div>
+
+      {/* ── Games — colorful per-card arcade grid ─────────────────── */}
+      <div style={{ padding: "0 12px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+        {GAMES.map((game, i) => {
+          const pal = GAME_PALETTES[i % GAME_PALETTES.length];
+          return (
+            <motion.button
+              key={game.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2, delay: i * 0.04 }}
+              onClick={() => game.available ? setPendingGame(game.id) : undefined}
+              style={{
+                background: pal.bg,
+                border: `3px solid ${pal.border}`,
+                borderRadius: 8,
+                padding: 0, overflow: "hidden",
+                boxShadow: `4px 4px 0 ${pal.shadow}`,
+                cursor: game.available ? "pointer" : "default",
+                opacity: game.available ? 1 : 0.6,
+                textAlign: "left",
+                transition: "all 0.08s",
+              }}
+              whileTap={game.available ? { scale: 0.97, boxShadow: `2px 2px 0 ${pal.shadow}`, x: 2, y: 2 } : undefined}
+            >
+              {/* Card top ribbon */}
+              <div style={{
+                background: pal.border, padding: "3px 8px",
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+              }}>
+                <span style={{ fontFamily: "'VT323', monospace", fontSize: "0.6rem", color: "white", letterSpacing: "0.1em" }}>
+                  {game.tag}
+                </span>
+                {game.badge === "HOT" && (
+                  <span style={{ fontFamily: "'VT323', monospace", fontSize: "0.55rem", background: "#fbbf24", color: "#78350f", padding: "0 4px", borderRadius: 2 }}>
+                    🔥 HOT
+                  </span>
+                )}
+                {game.badge === "SOON" && (
+                  <span style={{ fontFamily: "'VT323', monospace", fontSize: "0.55rem", background: "rgba(0,0,0,0.2)", color: "white", padding: "0 4px", borderRadius: 2 }}>
+                    SOON
+                  </span>
+                )}
+              </div>
+
+              {/* Card body */}
+              <div style={{ padding: "10px 10px 8px" }}>
+                <div style={{
+                  width: 36, height: 36, borderRadius: 6, marginBottom: 8,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  background: "rgba(255,255,255,0.7)", border: `2px solid ${pal.border}`,
+                }}>
+                  <game.Icon size={18} style={{ color: pal.border }} />
+                </div>
+                <p style={{ fontFamily: "'VT323', monospace", fontSize: "1rem", color: pal.text, letterSpacing: "0.03em", lineHeight: 1, marginBottom: 3 }}>
+                  {game.name}
+                </p>
+                <p style={{ fontSize: "0.7rem", color: pal.text, opacity: 0.75, marginBottom: 8 }}>
+                  {game.description}
+                </p>
+                <div style={{
+                  display: "inline-block",
+                  fontFamily: "'VT323', monospace", fontSize: "0.65rem", letterSpacing: "0.06em",
+                  background: game.available ? "white" : "rgba(255,255,255,0.4)",
+                  color: game.available ? pal.border : pal.text,
+                  border: `1.5px solid ${pal.border}`, borderRadius: 3,
+                  padding: "1px 7px",
+                }}>
+                  {game.available ? "▶ PLAY NOW" : "COMING SOON"}
+                </div>
+              </div>
+            </motion.button>
+          );
+        })}
+      </div>
+
+      {/* ── Tip — Sandy note card ──────────────────────────────────── */}
+      <div style={{ margin: "12px 12px 0" }}>
+        <div style={{
+          background: "#fefce8", border: "2px solid #fbbf24",
+          borderRadius: 6, overflow: "hidden", boxShadow: "3px 3px 0 #fbbf24",
+        }}>
+          <div style={{ background: "#fbbf24", padding: "3px 10px" }}>
+            <span style={{ fontFamily: "'VT323', monospace", fontSize: "0.75rem", color: "#78350f", letterSpacing: "0.08em" }}>
+              💡 PRO TIP
+            </span>
           </div>
-          <p className="vt" style={{ fontSize: "1.4rem", color: "#1a3d52" }}>PICK A GAME.</p>
-          <p className="text-xs" style={{ color: "#5a7d8a" }}>All of them earn coins — no excuses.</p>
-        </div>
-      </div>
-
-      {/* Games grid */}
-      <div className="px-3 grid grid-cols-2 gap-2">
-        {GAMES.map((game, i) => (
-          <motion.button
-            key={game.id}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2, delay: i * 0.04 }}
-            onClick={() => game.available ? setPendingGame(game.id) : undefined}
-            className="os-window text-left"
-            style={{
-              opacity: game.available ? 1 : 0.55,
-              cursor: game.available ? "pointer" : "default",
-            }}
-            whileTap={game.available ? { scale: 0.97 } : undefined}
-          >
-            <div className="os-titlebar py-1 gap-1">
-              <div style={{ width: 8, height: 8, borderRadius: "50%", background: game.color, flexShrink: 0, border: "1.5px solid rgba(0,0,0,0.15)" }} />
-              <span style={{ fontFamily: "'VT323', monospace", fontSize: "0.6rem", color: "#1a3d52", letterSpacing: "0.1em", flex: 1 }}>
-                {game.tag}
-              </span>
-              {game.badge === "HOT" && (
-                <span style={{ fontFamily: "'VT323', monospace", fontSize: "0.55rem", background: "#ff6b6b", color: "#fff", padding: "0 4px", borderRadius: 2, letterSpacing: "0.05em" }}>
-                  🔥 HOT
-                </span>
-              )}
-              {game.badge === "SOON" && (
-                <span style={{ fontFamily: "'VT323', monospace", fontSize: "0.55rem", background: "#b0d0e2", color: "#1a3d52", padding: "0 4px", borderRadius: 2 }}>
-                  SOON
-                </span>
-              )}
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "8px 12px" }}>
+            <Gamepad2 size={14} style={{ color: "#d97706", flexShrink: 0, marginTop: 2 }} />
+            <div>
+              <p style={{ fontSize: "0.8rem", fontWeight: 600, color: "#1a3d52", marginBottom: 2 }}>Pick your subject</p>
+              <p style={{ fontSize: "0.72rem", color: "#5a7d8a", lineHeight: 1.4 }}>
+                Each game lets you choose which topic to study — BSD lore, calculus, history, chemistry, and more. 🌊
+              </p>
             </div>
-            <div className="p-3" style={{ background: "#fff" }}>
-              <div className="w-9 h-9 rounded flex items-center justify-center mb-2 border-2" style={{ background: "#f0f8fc", borderColor: "#b0d0e2" }}>
-                <game.Icon size={16} style={{ color: game.color }} />
-              </div>
-              <p className="font-bold text-sm" style={{ color: "#1a3d52" }}>{game.name}</p>
-              <p className="text-xs mt-0.5" style={{ color: "#5a7d8a" }}>{game.description}</p>
-              <div className="mt-2 retro-btn inline-block py-0 px-2" style={{ fontSize: "0.6rem", background: game.available ? "#ddeef6" : "#f0f8fc", borderColor: "#b0d0e2", boxShadow: "none", color: game.available ? "#1a3d52" : "#8aaab8" }}>
-                {game.available ? "▶ PLAY NOW" : "COMING SOON"}
-              </div>
-            </div>
-          </motion.button>
-        ))}
-      </div>
-
-      {/* Tip */}
-      <div className="os-window mx-3 mt-3">
-        <div className="os-titlebar py-1">
-          <div className="os-btn-yellow" />
-          <span className="os-titlebar-title" style={{ fontSize: "0.7rem" }}>💡 TIP</span>
-        </div>
-        <div className="flex items-start gap-3 p-3" style={{ background: "#fffbeb" }}>
-          <Gamepad2 size={14} style={{ color: "#d97706", flexShrink: 0, marginTop: 2 }} />
-          <div>
-            <p className="text-sm font-bold" style={{ color: "#1a3d52" }}>Pick your subject</p>
-            <p className="text-xs mt-0.5 leading-relaxed" style={{ color: "#5a7d8a" }}>
-              Each game lets you choose which topic to study — BSD lore, calculus, history, chemistry, and more.
-            </p>
           </div>
         </div>
       </div>
