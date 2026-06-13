@@ -14,14 +14,14 @@ import { useGameState } from "./hooks/useGameState";
 type Tab = "home" | "study" | "games" | "gacha" | "collection" | "battle" | "chat" | "profile";
 
 const NAV_ITEMS: { id: Tab; label: string }[] = [
-  { id: "home",       label: "Home"       },
-  { id: "study",      label: "Study"      },
-  { id: "games",      label: "Games"      },
-  { id: "gacha",      label: "Gacha"      },
-  { id: "collection", label: "Cards"      },
-  { id: "battle",     label: "Battle"     },
-  { id: "chat",       label: "Chat"       },
-  { id: "profile",    label: "Profile"    },
+  { id: "home",       label: "Home"    },
+  { id: "study",      label: "Study"   },
+  { id: "games",      label: "Games"   },
+  { id: "gacha",      label: "Gacha"   },
+  { id: "collection", label: "Cards"   },
+  { id: "battle",     label: "Battle"  },
+  { id: "chat",       label: "Chat"    },
+  { id: "profile",    label: "Profile" },
 ];
 
 interface ToastNotif { id: string; message: string; coins?: number; }
@@ -53,6 +53,18 @@ export default function App() {
     showToast("Victory! +100 XP");
   }, [gs, showToast]);
 
+  const handleTrackStudyMinutes = useCallback((minutes: number) => {
+    gs.trackStudyMinutes(minutes);
+  }, [gs]);
+
+  const handleTrackQuizAnswer = useCallback(() => {
+    gs.trackQuizAnswer();
+  }, [gs]);
+
+  const handleUnlockBuff = useCallback((buffId: number, cost: number): boolean => {
+    return gs.unlockBuff(buffId, cost);
+  }, [gs]);
+
   const navigate = useCallback((tab: string) => setActiveTab(tab as Tab), []);
 
   if (!gs.user) return <LoginScreen onLogin={gs.login} />;
@@ -72,10 +84,23 @@ export default function App() {
             onClaimQuest={gs.claimQuest} onEarnCoins={handleEarnCoins}
             totalBattleWins={state.totalBattleWins}
             equippedFrame={state.equippedFrame}
+            dailyStats={state.dailyStats}
           />
         );
-      case "study":      return <StudyMode onEarnCoins={handleEarnCoins} />;
-      case "games":      return <GamesHub onEarnCoins={handleEarnCoins} />;
+      case "study":
+        return (
+          <StudyMode
+            onEarnCoins={handleEarnCoins}
+            onTrackStudyMinutes={handleTrackStudyMinutes}
+          />
+        );
+      case "games":
+        return (
+          <GamesHub
+            onEarnCoins={handleEarnCoins}
+            onTrackQuizAnswer={handleTrackQuizAnswer}
+          />
+        );
       case "gacha":
         return (
           <GachaScreen
@@ -114,6 +139,10 @@ export default function App() {
             xp={state.xp} level={state.level} streak={state.streak}
             totalBattleWins={state.totalBattleWins} totalPulls={state.totalPulls}
             onLogout={gs.logout} xpToNextLevel={gs.xpToNextLevel}
+            onEarnCoins={handleEarnCoins}
+            unlockedBuffIds={state.unlockedBuffIds}
+            onUnlockBuff={handleUnlockBuff}
+            dailyStats={state.dailyStats}
           />
         );
       default: return null;
@@ -219,7 +248,7 @@ export default function App() {
                   padding: "1px 6px", borderRadius: 3,
                   border: "1.5px solid #fbbf24", flexShrink: 0,
                 }}>
-                  +{toast.coins} coins
+                  +{toast.coins}
                 </span>
               )}
               <span style={{ fontFamily: "'VT323', monospace", fontSize: "0.9rem", color: "#1a3d52", letterSpacing: "0.03em" }}>

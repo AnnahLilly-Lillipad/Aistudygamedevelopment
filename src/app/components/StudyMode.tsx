@@ -582,7 +582,7 @@ function InlineMatch({ setId, customCards, setName, onBack, onEarnCoins }: {
 }
 
 // ─── Main StudyMode ────────────────────────────────────────────────────────────
-interface Props { onEarnCoins: (amount: number, reason: string) => void; }
+interface Props { onEarnCoins: (amount: number, reason: string) => void; onTrackStudyMinutes?: (minutes: number) => void; }
 
 type StudyView = null | {
   type: "quiz" | "flashcards" | "match";
@@ -591,7 +591,7 @@ type StudyView = null | {
   customCards?: Flashcard[];
 };
 
-export function StudyMode({ onEarnCoins }: Props) {
+export function StudyMode({ onEarnCoins, onTrackStudyMinutes }: Props) {
   const [activeTab, setActiveTab] = useState<"sets" | "timer" | "notes">("sets");
   const [studyView, setStudyView] = useState<StudyView>(null);
   const [timeLeft, setTimeLeft] = useState(POMODORO_WORK);
@@ -619,13 +619,13 @@ export function StudyMode({ onEarnCoins }: Props) {
         if (t <= 1) {
           clearInterval(intervalRef.current!);
           setIsRunning(false);
-          if (mode === "work") { setSessions(s => s + 1); onEarnCoins(50, "Pomodoro complete! 🍅"); }
+          if (mode === "work") { setSessions(s => s + 1); onEarnCoins(50, "Pomodoro complete! 🍅"); onTrackStudyMinutes?.(25); }
           return 0;
         }
         return t - 1;
       });
     }, 1000);
-  }, [mode, onEarnCoins]);
+  }, [mode, onEarnCoins, onTrackStudyMinutes]);
 
   const pause = useCallback(() => { setIsRunning(false); if (intervalRef.current) clearInterval(intervalRef.current); }, []);
   const reset = useCallback(() => { pause(); setTimeLeft(maxTime); }, [pause, maxTime]);

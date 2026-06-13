@@ -261,11 +261,9 @@ export function BattleMode({ ownedCards, onEarnCoins, onRecordWin, equippedFrame
             )}
           </div>
 
-          {ownedChars.length === 0 && (
-            <button onClick={() => setPlayerTeam(DEMO_TEAM)} className="retro-btn w-full py-2 text-sm">
-              🎭 USE DEMO TEAM (Dazai, Atsushi, Yosano)
-            </button>
-          )}
+          <button onClick={() => setPlayerTeam(DEMO_TEAM)} className="retro-btn w-full py-2 text-sm">
+            🎭 USE DEMO TEAM (Dazai, Atsushi, Yosano)
+          </button>
 
           {/* Start button — big red chunky */}
           <button onClick={() => startBattle()} disabled={playerTeam.length === 0}

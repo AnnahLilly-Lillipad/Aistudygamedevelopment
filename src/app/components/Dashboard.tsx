@@ -1,16 +1,9 @@
 import { motion } from "motion/react";
-import { ChevronRight, ArrowRight, BookOpen, Gamepad2, Swords, Flame, Layers,
-  Timer, HelpCircle, Sparkles, Map, Clock, Trophy } from "lucide-react";
+import { ArrowRight, Timer, HelpCircle, Sparkles, Map, Clock, Swords } from "lucide-react";
 import { CHARACTERS, ACHIEVEMENTS } from "../data/characters";
 import type { OwnedCard } from "../data/characters";
 import { CardImage } from "./CardImage";
-
-const DAILY_QUESTS = [
-  { id: 1, title: "Study for 25 min",        reward: 50, Icon: Timer,      accent: "#5b9aba", bg: "#ddeef6", border: "#5b9aba", progress: 25, total: 25, done: true,  tag: "📚 FOCUS"  },
-  { id: 2, title: "Answer 10 quiz questions", reward: 30, Icon: HelpCircle, accent: "#7c3aed", bg: "#ede9fe", border: "#a78bfa", progress: 7,  total: 10, done: false, tag: "🧠 QUIZ"   },
-  { id: 3, title: "Win a battle",             reward: 80, Icon: Swords,     accent: "#dc2626", bg: "#fee2e2", border: "#f87171", progress: 1,  total: 1,  done: true,  tag: "⚔️ BATTLE" },
-  { id: 4, title: "Pull 3 gacha cards",       reward: 20, Icon: Sparkles,   accent: "#b45309", bg: "#fef3c7", border: "#fbbf24", progress: 1,  total: 3,  done: false, tag: "✨ GACHA"  },
-];
+import type { DailyStats } from "../hooks/useGameState";
 
 const QUICK_ACTIONS = [
   { label: "📚 Study",  color: "#5b9aba", shadow: "#3d7a98", bg: "#ddeef6", textColor: "#1a3d52", tab: "study",  sub: "earn XP & coins" },
@@ -36,19 +29,47 @@ interface Props {
   username: string; avatar: string; xp: number; level: number; streak: number;
   claimedQuests: number[]; onClaimQuest: (id: number) => void;
   onEarnCoins: (amount: number, reason: string) => void; totalBattleWins: number;
-  equippedFrame: string;
+  equippedFrame: string; dailyStats: DailyStats;
 }
 
 export function Dashboard({
   coins, ownedCards, onNavigate,
   username, avatar, xp, level, streak,
   claimedQuests, onClaimQuest, onEarnCoins, totalBattleWins,
-  equippedFrame,
+  equippedFrame, dailyStats,
 }: Props) {
   const recentChars = ownedCards.slice(-6).reverse()
     .map(oc => CHARACTERS.find(c => c.id === oc.characterId)).filter(Boolean);
   const xpNeeded = xpForLevel(level);
   const xpProgress = Math.min(100, Math.round((xp / xpNeeded) * 100));
+
+  // Dynamic quest progress driven by real gameplay
+  const DAILY_QUESTS = [
+    {
+      id: 1, title: "Study for 25 min", reward: 50, Icon: Timer,
+      accent: "#5b9aba", bg: "#ddeef6", border: "#5b9aba",
+      progress: Math.min(dailyStats.studyMinutes, 25), total: 25,
+      done: dailyStats.studyMinutes >= 25, tag: "📚 FOCUS",
+    },
+    {
+      id: 2, title: "Answer 10 quiz questions", reward: 30, Icon: HelpCircle,
+      accent: "#7c3aed", bg: "#ede9fe", border: "#a78bfa",
+      progress: Math.min(dailyStats.quizAnswers, 10), total: 10,
+      done: dailyStats.quizAnswers >= 10, tag: "🧠 QUIZ",
+    },
+    {
+      id: 3, title: "Win a battle", reward: 80, Icon: Swords,
+      accent: "#dc2626", bg: "#fee2e2", border: "#f87171",
+      progress: Math.min(dailyStats.battleWins, 1), total: 1,
+      done: dailyStats.battleWins >= 1, tag: "⚔️ BATTLE",
+    },
+    {
+      id: 4, title: "Pull 3 gacha cards", reward: 20, Icon: Sparkles,
+      accent: "#b45309", bg: "#fef3c7", border: "#fbbf24",
+      progress: Math.min(dailyStats.gachaPulls, 3), total: 3,
+      done: dailyStats.gachaPulls >= 3, tag: "✨ GACHA",
+    },
+  ];
 
   function handleClaimQuest(quest: typeof DAILY_QUESTS[0]) {
     onClaimQuest(quest.id);
@@ -59,7 +80,6 @@ export function Dashboard({
     <div style={{ padding: "10px 10px 60px", display: "flex", flexDirection: "column", gap: 12 }}>
 
       {/* ── PROFILE CARD ─────────────────────────────────────── */}
-      {/* Inspired by retro OS window but with a player-card interior */}
       <div className="os-window">
         <div className="os-titlebar">
           <span className="os-btn-red" /><span className="os-btn-yellow" /><span className="os-btn-green" />
@@ -78,12 +98,10 @@ export function Dashboard({
         </div>
 
         <div style={{ padding: "12px 14px", background: "#f8fcfe" }}>
-          {/* greeting */}
           <p style={{ fontFamily: "'VT323', monospace", fontSize: "0.9rem", color: "#5a7d8a", letterSpacing: "0.06em", marginBottom: 10 }}>
             {getGreeting()}
           </p>
 
-          {/* Avatar + name row */}
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
             <div style={{ position: "relative", flexShrink: 0 }}>
               <div style={{
@@ -116,7 +134,6 @@ export function Dashboard({
             </div>
           </div>
 
-          {/* XP bar */}
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
               <span style={{ fontFamily: "'VT323', monospace", fontSize: "0.8rem", color: "#5a7d8a", letterSpacing: "0.06em" }}>⚡ XP — LVL {level}</span>
@@ -134,12 +151,11 @@ export function Dashboard({
             </div>
           </div>
 
-          {/* Stats row — horizontal tags, no box */}
           <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
             {[
-              { value: streak,               label: "day streak",  emoji: "🔥" },
-              { value: ownedCards.length,     label: "cards",       emoji: "🃏" },
-              { value: totalBattleWins,       label: "battle wins", emoji: "🏆" },
+              { value: streak,           label: "day streak",  emoji: "🔥" },
+              { value: ownedCards.length, label: "cards",      emoji: "🃏" },
+              { value: totalBattleWins,  label: "battle wins", emoji: "🏆" },
             ].map(({ value, label, emoji }) => (
               <div key={label} style={{
                 background: "#ddeef6", border: "2px solid #7ab2c8", borderRadius: 20,
@@ -155,7 +171,7 @@ export function Dashboard({
         </div>
       </div>
 
-      {/* ── QUICK ACTIONS — big chunky colored buttons, no wrapper box ── */}
+      {/* ── QUICK ACTIONS ── */}
       <div>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, paddingLeft: 2 }}>
           <div style={{ width: 4, height: 16, background: "#5b9aba", borderRadius: 2 }} />
@@ -170,14 +186,9 @@ export function Dashboard({
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.15, delay: i * 0.04 }}
               style={{
-                background: action.bg,
-                border: `3px solid ${action.color}`,
-                borderRadius: 6,
-                padding: "12px 10px",
-                textAlign: "left",
-                cursor: "pointer",
-                boxShadow: `3px 3px 0 ${action.shadow}`,
-                transition: "all 0.08s",
+                background: action.bg, border: `3px solid ${action.color}`,
+                borderRadius: 6, padding: "12px 10px", textAlign: "left",
+                cursor: "pointer", boxShadow: `3px 3px 0 ${action.shadow}`, transition: "all 0.08s",
               }}
               onMouseEnter={e => { e.currentTarget.style.boxShadow = `1px 1px 0 ${action.shadow}`; e.currentTarget.style.transform = "translate(2px,2px)"; }}
               onMouseLeave={e => { e.currentTarget.style.boxShadow = `3px 3px 0 ${action.shadow}`; e.currentTarget.style.transform = "none"; }}
@@ -193,7 +204,7 @@ export function Dashboard({
         </div>
       </div>
 
-      {/* ── DAILY MISSIONS — sticky-note pastel cards ────────── */}
+      {/* ── DAILY MISSIONS ── */}
       <div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, paddingLeft: 2 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -209,19 +220,14 @@ export function Dashboard({
             const claimed = claimedQuests.includes(quest.id);
             const claimable = quest.done && !claimed;
             return (
-              <div
-                key={quest.id}
-                style={{
-                  background: claimed ? "#f0fdf4" : quest.bg,
-                  border: `2px solid ${claimed ? "#86efac" : quest.border}`,
-                  borderRadius: 6,
-                  display: "flex", alignItems: "center", gap: 8,
-                  padding: "8px 10px",
-                  boxShadow: claimed ? "2px 2px 0 #86efac" : `2px 2px 0 ${quest.border}`,
-                  position: "relative",
-                }}
-              >
-                {/* tag pill */}
+              <div key={quest.id} style={{
+                background: claimed ? "#f0fdf4" : quest.bg,
+                border: `2px solid ${claimed ? "#86efac" : quest.border}`,
+                borderRadius: 6, display: "flex", alignItems: "center", gap: 8,
+                padding: "8px 10px",
+                boxShadow: claimed ? "2px 2px 0 #86efac" : `2px 2px 0 ${quest.border}`,
+                position: "relative",
+              }}>
                 <div style={{
                   position: "absolute", top: -8, left: 8,
                   background: claimed ? "#4ade80" : quest.accent, color: "white",
@@ -237,14 +243,14 @@ export function Dashboard({
                   </p>
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                     <div style={{ flex: 1, height: 6, background: "rgba(255,255,255,0.6)", border: `1.5px solid ${quest.border}`, borderRadius: 3, overflow: "hidden" }}>
-                      <div style={{ height: "100%", width: `${(quest.progress / quest.total) * 100}%`, background: claimed ? "#4ade80" : quest.accent, borderRadius: 2 }} />
+                      <div style={{ height: "100%", width: `${(quest.progress / quest.total) * 100}%`, background: claimed ? "#4ade80" : quest.accent, borderRadius: 2, transition: "width 0.4s ease" }} />
                     </div>
                     <span style={{ fontFamily: "'VT323', monospace", fontSize: "0.7rem", color: "#5a7d8a", flexShrink: 0 }}>{quest.progress}/{quest.total}</span>
                   </div>
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, flexShrink: 0 }}>
                   <span style={{ fontFamily: "'VT323', monospace", fontSize: "0.9rem", color: "#92400e" }}>🪙 {quest.reward}</span>
-                  {claimable ? (
+                  {claimable && (
                     <button onClick={() => handleClaimQuest(quest)}
                       style={{
                         fontFamily: "'VT323', monospace", fontSize: "0.75rem", letterSpacing: "0.05em",
@@ -254,7 +260,7 @@ export function Dashboard({
                       }}>
                       CLAIM ✦
                     </button>
-                  ) : null}
+                  )}
                 </div>
               </div>
             );
@@ -262,7 +268,7 @@ export function Dashboard({
         </div>
       </div>
 
-      {/* ── ROSTER — horizontal scroll with polaroid vibe ────── */}
+      {/* ── YOUR ROSTER ── */}
       {recentChars.length > 0 && (
         <div>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, paddingLeft: 2 }}>
@@ -280,12 +286,7 @@ export function Dashboard({
           <div style={{ background: "#f0f8fc", border: "2px solid #9dc4d8", borderRadius: 6, padding: "8px 10px", boxShadow: "3px 3px 0 #9dc4d8" }}>
             <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
               {recentChars.map((char, i) => char && (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, x: 5 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.18, delay: i * 0.04 }}
-                  style={{ flexShrink: 0 }}>
+                <motion.div key={i} initial={{ opacity: 0, x: 5 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.18, delay: i * 0.04 }} style={{ flexShrink: 0 }}>
                   <CardImage character={char} size="xs" showName frameId={equippedFrame} />
                 </motion.div>
               ))}
@@ -303,17 +304,14 @@ export function Dashboard({
         </div>
       )}
 
-      {/* ── HALL OF FAME — ribbon / badge banner style ────────── */}
+      {/* ── HALL OF FAME ── */}
       <div>
         <div style={{
           background: "linear-gradient(135deg, #1a3d52 0%, #2a5a70 100%)",
-          borderRadius: "6px 6px 0 0",
-          padding: "6px 12px",
+          borderRadius: "6px 6px 0 0", padding: "6px 12px",
           display: "flex", alignItems: "center", justifyContent: "space-between",
         }}>
-          <span style={{ fontFamily: "'VT323', monospace", fontSize: "0.85rem", color: "#cde5f0", letterSpacing: "0.12em" }}>
-            🏅 HALL OF FAME
-          </span>
+          <span style={{ fontFamily: "'VT323', monospace", fontSize: "0.85rem", color: "#cde5f0", letterSpacing: "0.12em" }}>🏅 HALL OF FAME</span>
           <span style={{ fontFamily: "'VT323', monospace", fontSize: "0.75rem", color: "#7ab2c8" }}>
             {ACHIEVEMENTS.filter(a => a.earned).length}/{ACHIEVEMENTS.length} earned
           </span>
@@ -340,37 +338,28 @@ export function Dashboard({
         </div>
       </div>
 
-      {/* ── EXPEDITION — ticket stub style ───────────────────── */}
+      {/* ── EXPEDITION ── */}
       <div style={{ position: "relative" }}>
         <div style={{
-          background: "#fff8f0",
-          border: "2px solid #e8a262",
-          borderRadius: 6,
-          overflow: "hidden",
-          boxShadow: "3px 3px 0 #c9823e",
+          background: "#fff8f0", border: "2px solid #e8a262",
+          borderRadius: 6, overflow: "hidden", boxShadow: "3px 3px 0 #c9823e",
         }}>
-          {/* ticket top bar */}
-          <div style={{
-            background: "#e8a262",
-            padding: "4px 12px",
-            display: "flex", alignItems: "center", gap: 6,
-          }}>
+          <div style={{ background: "#e8a262", padding: "4px 12px", display: "flex", alignItems: "center", gap: 6 }}>
             <span style={{ fontFamily: "'VT323', monospace", fontSize: "0.85rem", color: "#fff", letterSpacing: "0.1em" }}>🗺️ EXPEDITION.EXE</span>
           </div>
-          {/* dashed divider line (perforation effect) */}
-          <div style={{ height: 0, borderTop: "2px dashed #e8a262", margin: "0" }} />
+          <div style={{ height: 0, borderTop: "2px dashed #e8a262", margin: 0 }} />
           <div style={{ padding: "10px 14px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 4 }}>
                 <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#10b981", border: "1.5px solid #059669", boxShadow: "0 0 5px #10b981" }} />
-                <span style={{ fontFamily: "'VT323', monospace", fontSize: "0.75rem", color: "#78350f", letterSpacing: "0.06em" }}>✦ 3 cards away from finish</span>
+                <span style={{ fontFamily: "'VT323', monospace", fontSize: "0.75rem", color: "#78350f", letterSpacing: "0.06em" }}>✦ active — check Profile for details</span>
               </div>
               <p style={{ fontFamily: "'VT323', monospace", fontSize: "1.1rem", color: "#92400e", letterSpacing: "0.04em", marginBottom: 4 }}>
                 Expedition Active ⚡
               </p>
               <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
                 <Clock size={11} style={{ color: "#c9823e" }} />
-                <span style={{ fontFamily: "'VT323', monospace", fontSize: "0.75rem", color: "#78350f", letterSpacing: "0.04em" }}>returns in 2h 15m</span>
+                <span style={{ fontFamily: "'VT323', monospace", fontSize: "0.75rem", color: "#78350f", letterSpacing: "0.04em" }}>one ready to collect!</span>
               </div>
             </div>
             <Map size={36} style={{ color: "#e8a262", flexShrink: 0 }} />

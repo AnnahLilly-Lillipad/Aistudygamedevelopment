@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Zap } from "lucide-react";
+import { Zap, Check } from "lucide-react";
 import { ACHIEVEMENTS, CHARACTERS, type OwnedCard } from "../data/characters";
+import type { DailyStats } from "../hooks/useGameState";
 
 const HEATMAP_DATA = Array.from({ length: 91 }, (_, i) => ({
   day: i,
@@ -8,18 +9,25 @@ const HEATMAP_DATA = Array.from({ length: 91 }, (_, i) => ({
 }));
 
 const GLOBAL_BUFFS = [
-  { id: 1, name: "Coin Boost I",        description: "+5% coin gain from all sources",     cost: "50 Rare Drops",  unlocked: true  },
-  { id: 2, name: "XP Amplifier",        description: "+10% XP from quiz games",             cost: "100 Rare Drops", unlocked: true  },
-  { id: 3, name: "Pity Reduction",       description: "Pity triggers at 90 pulls",           cost: "200 Rare Drops", unlocked: false },
-  { id: 4, name: "Double Study Coins",   description: "+100% coins from Pomodoro",           cost: "500 Rare Drops", unlocked: false },
+  { id: 1, name: "Coin Boost I",       description: "+5% coin gain from all sources",     cost: 500,  coinLabel: "500 coins"  },
+  { id: 2, name: "XP Amplifier",       description: "+10% XP from quiz games",             cost: 800,  coinLabel: "800 coins"  },
+  { id: 3, name: "Pity Reduction",      description: "Pity triggers at 90 pulls instead of 100", cost: 1500, coinLabel: "1,500 coins" },
+  { id: 4, name: "Double Study Coins", description: "+100% coins from Pomodoro sessions",  cost: 3000, coinLabel: "3,000 coins" },
 ];
 
-const LEADERBOARD = [
+const GLOBAL_LEADERBOARD = [
   { rank: 1, name: "Dazai_Fan99",      xp: 48200, avatar: "🏆" },
   { rank: 2, name: "PortMafiaAce",     xp: 41500, avatar: "⭐" },
   { rank: 3, name: "BSDScholar",       xp: 38900, avatar: "📚" },
   { rank: 4, name: "ChuuyaSimp",       xp: 2100,  avatar: "🌹" },
   { rank: 5, name: "RanpoDetective",   xp: 1800,  avatar: "🔍" },
+];
+
+const FRIENDS_LEADERBOARD = [
+  { rank: 1, name: "AkikoHealer",    xp: 12400, avatar: "💊" },
+  { rank: 2, name: "SilverWolfFan", xp: 9800,  avatar: "🐺" },
+  { rank: 3, name: "FyodorSimp",    xp: 6200,  avatar: "☦️" },
+  { rank: 4, name: "TanizakiMain",  xp: 4100,  avatar: "🌸" },
 ];
 
 const BUFF_COLORS = ["#ddeef6", "#d1fae5", "#fef3c7", "#ede9fe"];
@@ -29,15 +37,21 @@ interface Props {
   coins: number; ownedCards: OwnedCard[]; username: string; avatar: string;
   xp: number; level: number; streak: number; totalBattleWins: number; totalPulls: number;
   onLogout: () => void; xpToNextLevel: (level: number) => number;
+  onEarnCoins: (amount: number, reason: string) => void;
+  unlockedBuffIds: number[];
+  onUnlockBuff: (buffId: number, cost: number) => boolean;
+  dailyStats: DailyStats;
 }
 
-export function ProfilePage({ coins, ownedCards, username, avatar, xp, level, streak,
-  totalBattleWins, totalPulls, onLogout, xpToNextLevel }: Props) {
+export function ProfilePage({
+  coins, ownedCards, username, avatar, xp, level, streak,
+  totalBattleWins, totalPulls, onLogout, xpToNextLevel,
+  onEarnCoins, unlockedBuffIds, onUnlockBuff,
+}: Props) {
   const [activeTab, setActiveTab] = useState<"overview" | "achievements" | "buffs" | "leaderboard" | "legal">("overview");
   const [leaderboardFilter, setLeaderboardFilter] = useState<"Global" | "Friends" | "Weekly">("Global");
   const [collectedExpeditions, setCollectedExpeditions] = useState<Set<number>>(new Set());
-  const [buffFeedback, setBuffFeedback] = useState<number | null>(null);
-  const [expeditionMsg, setExpeditionMsg] = useState<string | null>(null);
+  const [buffFeedback, setBuffFeedback] = useState<{ id: number; msg: string } | null>(null);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const ownedCount = new Set(ownedCards.map(c => c.characterId)).size;
@@ -56,35 +70,69 @@ export function ProfilePage({ coins, ownedCards, username, avatar, xp, level, st
   };
 
   const TABS = [
-    { id: "overview",      label: "OVERVIEW"    },
-    { id: "achievements",  label: "BADGES"      },
-    { id: "buffs",         label: "BUFFS"       },
-    { id: "leaderboard",   label: "RANKING"     },
-    { id: "legal",         label: "LEGAL"       },
+    { id: "overview",     label: "OVERVIEW"  },
+    { id: "achievements", label: "BADGES"    },
+    { id: "buffs",        label: "BUFFS"     },
+    { id: "leaderboard",  label: "RANKING"   },
+    { id: "legal",        label: "LEGAL"     },
   ] as const;
 
-  const userLeaderboardEntry = { rank: 4, name: username, xp, avatar, isUser: true };
-  const fullLeaderboard = [...LEADERBOARD.filter(e => e.xp > xp), userLeaderboardEntry, ...LEADERBOARD.filter(e => e.xp <= xp)]
+  // Build leaderboard for each filter
+  const userEntry = { rank: 0, name: username, xp, avatar, isUser: true };
+
+  function buildLeaderboard(base: { rank: number; name: string; xp: number; avatar: string }[]) {
+    const combined = [...base.filter(e => e.xp > xp), userEntry, ...base.filter(e => e.xp <= xp)]
+      .sort((a, b) => b.xp - a.xp).map((e, i) => ({ ...e, rank: i + 1 }));
+    return combined;
+  }
+
+  const weeklyXp = Math.round(xp * 0.18); // simulate weekly contribution
+  const weeklyBoard = [
+    { rank: 1, name: "Dazai_Fan99",   xp: 8400, avatar: "🏆" },
+    { rank: 2, name: "BSDScholar",    xp: 6100, avatar: "📚" },
+    { rank: 3, name: "PortMafiaAce",  xp: 4900, avatar: "⭐" },
+  ];
+  const weeklyUserEntry = { rank: 0, name: username + " (you)", xp: weeklyXp, avatar, isUser: true };
+  const fullWeeklyBoard = [...weeklyBoard.filter(e => e.xp > weeklyXp), weeklyUserEntry, ...weeklyBoard.filter(e => e.xp <= weeklyXp)]
     .sort((a, b) => b.xp - a.xp).map((e, i) => ({ ...e, rank: i + 1 }));
 
+  const fullLeaderboard =
+    leaderboardFilter === "Global"  ? buildLeaderboard(GLOBAL_LEADERBOARD) :
+    leaderboardFilter === "Friends" ? buildLeaderboard(FRIENDS_LEADERBOARD) :
+    fullWeeklyBoard;
+
   const STAT_CARDS = [
-    { label: "Cards Owned",   value: ownedCount,                         icon: "🃏",  sub: `${CHARACTERS.length} total`,  accent: "#5b9aba", bg: "#ddeef6",  border: "#7ab2c8" },
-    { label: "UR Cards",      value: urCount,                            icon: "💎",  sub: `${ssrCount} SSR`,             accent: "#dc2626", bg: "#fee2e2",  border: "#f87171" },
-    { label: "Battle Wins",   value: totalBattleWins,                    icon: "⚔️",  sub: "all time",                    accent: "#059669", bg: "#d1fae5",  border: "#34d399" },
-    { label: "Total Pulls",   value: totalPulls,                         icon: "✨",  sub: "all banners",                 accent: "#7c3aed", bg: "#ede9fe",  border: "#a78bfa" },
-    { label: "Achievements",  value: `${earnedAchievements}/${ACHIEVEMENTS.length}`, icon: "🏆", sub: "unlocked", accent: "#d97706", bg: "#fef3c7", border: "#fbbf24" },
-    { label: "Study Streak",  value: `${streak}d`,                       icon: "🔥",  sub: `Level ${level} Scholar`,      accent: "#e11d48", bg: "#ffe4e6",  border: "#fca5a5" },
+    { label: "Cards Owned",  value: ownedCount,                          icon: "🃏", sub: `${CHARACTERS.length} total`, accent: "#5b9aba", bg: "#ddeef6", border: "#7ab2c8" },
+    { label: "UR Cards",     value: urCount,                             icon: "💎", sub: `${ssrCount} SSR`,           accent: "#dc2626", bg: "#fee2e2", border: "#f87171" },
+    { label: "Battle Wins",  value: totalBattleWins,                     icon: "⚔️", sub: "all time",                 accent: "#059669", bg: "#d1fae5", border: "#34d399" },
+    { label: "Total Pulls",  value: totalPulls,                          icon: "✨", sub: "all banners",              accent: "#7c3aed", bg: "#ede9fe", border: "#a78bfa" },
+    { label: "Achievements", value: `${earnedAchievements}/${ACHIEVEMENTS.length}`, icon: "🏆", sub: "unlocked", accent: "#d97706", bg: "#fef3c7", border: "#fbbf24" },
+    { label: "Study Streak", value: `${streak}d`,                        icon: "🔥", sub: `Level ${level} Scholar`,  accent: "#e11d48", bg: "#ffe4e6", border: "#fca5a5" },
   ];
+
+  const EXPEDITIONS = [
+    { name: "Yokohama Night Patrol",   chars: ["🪄", "⚔️"], duration: "2h 15m", ready: false, reward: 200 },
+    { name: "Port Mafia Intel Gather", chars: ["🎩", "🖤"], duration: "6h 00m", ready: true,  reward: 500 },
+  ];
+
+  function handleUnlockBuff(buff: typeof GLOBAL_BUFFS[0]) {
+    if (unlockedBuffIds.includes(buff.id)) return;
+    const success = onUnlockBuff(buff.id, buff.cost);
+    if (success) {
+      setBuffFeedback({ id: buff.id, msg: "Buff activated!" });
+    } else {
+      setBuffFeedback({ id: buff.id, msg: `Need ${buff.coinLabel} — keep studying!` });
+    }
+    setTimeout(() => setBuffFeedback(null), 2500);
+  }
 
   return (
     <div className="h-full flex flex-col">
 
-      {/* ── Profile header — passport/journal style ───────────── */}
+      {/* ── Profile header ── */}
       <div style={{
         background: "linear-gradient(135deg, #1a3d52 0%, #2a5a70 100%)",
-        borderBottom: "3px solid #5b9aba",
-        padding: "12px 14px",
-        flexShrink: 0,
+        borderBottom: "3px solid #5b9aba", padding: "12px 14px", flexShrink: 0,
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{
@@ -98,108 +146,86 @@ export function ProfilePage({ coins, ownedCards, username, avatar, xp, level, st
             <div style={{
               position: "absolute", bottom: -8, right: -8,
               background: "#fbbf24", color: "#78350f",
-              fontFamily: "'VT323', monospace", fontSize: "0.75rem",
-              padding: "1px 5px", borderRadius: 3,
-              border: "1.5px solid #e0b050",
-            }}>LV.{level}</div>
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ fontFamily: "'VT323', monospace", fontSize: "0.7rem", color: "#7ab2c8", letterSpacing: "0.08em" }}>
-              SCHOLAR PROFILE
-            </p>
-            <h2 style={{ fontFamily: "'VT323', monospace", fontSize: "1.6rem", color: "#cde5f0", letterSpacing: "0.04em", lineHeight: 1, marginBottom: 2 }}>
-              {username} ✦
-            </h2>
-            <span style={{
-              fontFamily: "'VT323', monospace", fontSize: "0.7rem", letterSpacing: "0.04em",
-              background: "#ffd166", color: "#78350f",
-              padding: "1px 8px", borderRadius: 3, border: "1.5px solid #e0b050",
+              fontFamily: "'VT323', monospace", fontSize: "0.8rem",
+              letterSpacing: "0.04em", padding: "1px 6px",
+              border: "2px solid #e0b050", borderRadius: 3,
             }}>
-              Aspiring Detective
-            </span>
-          </div>
-          <div style={{ textAlign: "right", flexShrink: 0 }}>
-            <div style={{ fontFamily: "'VT323', monospace", fontSize: "1.15rem", color: "#fbbf24" }}>🪙 {coins.toLocaleString()}</div>
-            <button onClick={() => setShowLogoutConfirm(true)}
-              style={{
-                marginTop: 4,
-                fontFamily: "'VT323', monospace", fontSize: "0.65rem", letterSpacing: "0.05em",
-                background: "rgba(255,255,255,0.1)", color: "#cde5f0",
-                border: "1.5px solid rgba(255,255,255,0.25)", borderRadius: 4,
-                padding: "2px 8px", cursor: "pointer",
-              }}>LOG OUT</button>
-          </div>
-        </div>
-
-        {/* XP bar */}
-        <div style={{ marginTop: 10 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-            <span style={{ fontFamily: "'VT323', monospace", fontSize: "0.7rem", color: "#7ab2c8", letterSpacing: "0.06em" }}>⚡ XP {xp.toLocaleString()}</span>
-            <span style={{ fontFamily: "'VT323', monospace", fontSize: "0.7rem", color: "#7ab2c8", letterSpacing: "0.06em" }}>NEXT {xpNeeded.toLocaleString()}</span>
-          </div>
-          <div style={{ height: 10, background: "rgba(255,255,255,0.1)", border: "1.5px solid #3d7a98", borderRadius: 3, overflow: "hidden" }}>
-            <div style={{ height: "100%", width: `${xpProgress}%`, background: "linear-gradient(90deg, #fbbf24, #fde68a)", borderRadius: 2, transition: "width 0.5s ease" }} />
-          </div>
-        </div>
-      </div>
-
-      {/* Logout confirm */}
-      {showLogoutConfirm && (
-        <div className="mx-3 mt-2 mb-0 os-window flex-shrink-0">
-          <div className="os-titlebar" style={{ background: "linear-gradient(180deg,#ffeaea,#ffd0d0)", borderColor: "#e05555" }}>
-            <div className="os-btn-red" /><div className="os-btn-yellow" /><div className="os-btn-green" />
-            <span className="os-titlebar-title" style={{ color: "#b03a3a" }}>CONFIRM LOGOUT</span>
-          </div>
-          <div className="flex items-center justify-between gap-3 px-3 py-2" style={{ background: "#fff" }}>
-            <p className="text-sm" style={{ color: "#b03a3a" }}>Log out of <strong>{username}</strong>?</p>
-            <div className="flex gap-2">
-              <button onClick={() => setShowLogoutConfirm(false)} className="retro-btn text-xs py-1 px-2">CANCEL</button>
-              <button onClick={onLogout} className="retro-btn text-xs py-1 px-2" style={{ background: "#d64f4f", color: "#fff", borderColor: "#b03a3a" }}>LOG OUT</button>
+              LV.{level}
             </div>
           </div>
-        </div>
-      )}
-
-      {/* ── Tabs — pill style ─────────────────────────────────── */}
-      <div style={{ display: "flex", gap: 5, padding: "8px 12px", overflowX: "auto", flexShrink: 0 }} className="no-scrollbar">
-        {TABS.map(tab => (
-          <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+          <div style={{ flex: 1 }}>
+            <h1 style={{ fontFamily: "'VT323', monospace", fontSize: "1.6rem", color: "#cde5f0", letterSpacing: "0.06em", lineHeight: 1, marginBottom: 4 }}>
+              {username}
+            </h1>
+            <div style={{ height: 8, background: "rgba(255,255,255,0.15)", border: "1.5px solid #5b9aba", borderRadius: 3, overflow: "hidden", marginBottom: 4 }}>
+              <div style={{ height: "100%", width: `${xpProgress}%`, background: "linear-gradient(90deg, #5b9aba, #7fd3f0)", borderRadius: 2, transition: "width 0.6s ease" }} />
+            </div>
+            <span style={{ fontFamily: "'VT323', monospace", fontSize: "0.75rem", color: "#9dc4d8", letterSpacing: "0.04em" }}>
+              {xp.toLocaleString()} / {xpNeeded.toLocaleString()} XP &nbsp;·&nbsp; 🪙 {coins.toLocaleString()}
+            </span>
+          </div>
+          <button onClick={() => setShowLogoutConfirm(true)}
             style={{
-              flexShrink: 0,
-              fontFamily: "'VT323', monospace", fontSize: "0.72rem", letterSpacing: "0.05em",
-              padding: "4px 12px", borderRadius: 20, cursor: "pointer", whiteSpace: "nowrap",
-              background: activeTab === tab.id ? "#5b9aba" : "#ddeef6",
-              color: activeTab === tab.id ? "white" : "#1a3d52",
-              border: `2px solid ${activeTab === tab.id ? "#3d7a98" : "#9dc4d8"}`,
-              boxShadow: activeTab === tab.id ? "2px 2px 0 #3d7a98" : "2px 2px 0 #9dc4d8",
-              transition: "all 0.08s",
+              fontFamily: "'VT323', monospace", fontSize: "0.7rem", letterSpacing: "0.05em",
+              background: "rgba(220,38,38,0.2)", color: "#fca5a5",
+              border: "1.5px solid #f87171", borderRadius: 4, padding: "4px 8px", cursor: "pointer",
+              alignSelf: "flex-start",
+            }}>LOGOUT</button>
+        </div>
+
+        {showLogoutConfirm && (
+          <div style={{ marginTop: 10, background: "rgba(0,0,0,0.3)", borderRadius: 6, padding: "8px 12px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+            <span style={{ fontFamily: "'VT323', monospace", fontSize: "0.8rem", color: "#fca5a5" }}>Log out of {username}?</span>
+            <div style={{ display: "flex", gap: 6 }}>
+              <button onClick={() => setShowLogoutConfirm(false)}
+                style={{ fontFamily: "'VT323', monospace", fontSize: "0.7rem", background: "rgba(255,255,255,0.1)", color: "#cde5f0", border: "1.5px solid rgba(255,255,255,0.2)", borderRadius: 3, padding: "2px 8px", cursor: "pointer" }}>CANCEL</button>
+              <button onClick={onLogout}
+                style={{ fontFamily: "'VT323', monospace", fontSize: "0.7rem", background: "#dc2626", color: "white", border: "1.5px solid #b91c1c", borderRadius: 3, padding: "2px 8px", cursor: "pointer" }}>CONFIRM</button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── Tabs ── */}
+      <div style={{
+        display: "flex", background: "#ddeef6", borderBottom: "2px solid #7ab2c8",
+        flexShrink: 0, overflowX: "auto",
+      }}>
+        {TABS.map(t => (
+          <button key={t.id} onClick={() => setActiveTab(t.id)}
+            style={{
+              flex: "0 0 auto", padding: "7px 12px",
+              fontFamily: "'VT323', monospace", fontSize: "0.7rem", letterSpacing: "0.07em",
+              background: activeTab === t.id ? "#fff" : "transparent",
+              color: activeTab === t.id ? "#1a3d52" : "#5a7d8a",
+              borderRight: "1px solid #b0d0e2", borderBottom: activeTab === t.id ? "2px solid #fff" : "2px solid transparent",
+              cursor: "pointer", marginBottom: -2, transition: "background 0.1s",
             }}>
-            {tab.label}
+            {t.label}
           </button>
         ))}
       </div>
 
-      <div className="flex-1 overflow-y-auto px-3 pb-4">
+      {/* ── Content ── */}
+      <div style={{ flex: 1, overflowY: "auto", padding: "12px 12px 60px" }}>
 
-        {/* ── Overview ─────────────────────────────────────────── */}
+        {/* ── Overview ── */}
         {activeTab === "overview" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {/* Stats — colorful cards, 2-column */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-              {STAT_CARDS.map(s => (
-                <div key={s.label} style={{
-                  background: s.bg,
-                  border: `3px solid ${s.accent}`,
-                  borderRadius: 6,
-                  padding: "10px 12px",
-                  boxShadow: `3px 3px 0 ${s.border}`,
-                  display: "flex", alignItems: "center", gap: 8,
+            {/* Stat grid */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7 }}>
+              {STAT_CARDS.map(card => (
+                <div key={card.label} style={{
+                  background: card.bg, border: `2px solid ${card.border}`,
+                  borderRadius: 6, padding: "8px 10px",
+                  boxShadow: `2px 2px 0 ${card.border}`,
                 }}>
-                  <span style={{ fontSize: "1.4rem", flexShrink: 0 }}>{s.icon}</span>
-                  <div>
-                    <div style={{ fontFamily: "'VT323', monospace", fontSize: "1.3rem", color: "#1a3d52", lineHeight: 1 }}>{s.value}</div>
-                    <div style={{ fontFamily: "'VT323', monospace", fontSize: "0.6rem", color: "#5a7d8a", letterSpacing: "0.06em" }}>{s.label}</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 3 }}>
+                    <span style={{ fontSize: "1rem" }}>{card.icon}</span>
+                    <span style={{ fontFamily: "'VT323', monospace", fontSize: "0.65rem", color: card.accent, letterSpacing: "0.07em" }}>{card.label}</span>
                   </div>
+                  <p style={{ fontFamily: "'VT323', monospace", fontSize: "1.5rem", color: "#1a3d52", lineHeight: 1, marginBottom: 2 }}>{card.value}</p>
+                  <p style={{ fontFamily: "'VT323', monospace", fontSize: "0.6rem", color: "#5a7d8a" }}>{card.sub}</p>
                 </div>
               ))}
             </div>
@@ -230,7 +256,7 @@ export function ProfilePage({ coins, ownedCards, username, avatar, xp, level, st
               </div>
             </div>
 
-            {/* Expeditions — ticket stub style */}
+            {/* Expeditions */}
             <div>
               <div style={{
                 background: "#fbbf24", padding: "4px 10px", borderRadius: "6px 6px 0 0",
@@ -239,42 +265,34 @@ export function ProfilePage({ coins, ownedCards, username, avatar, xp, level, st
                 <span style={{ fontFamily: "'VT323', monospace", fontSize: "0.8rem", color: "#78350f", letterSpacing: "0.08em" }}>
                   🗺️ EXPEDITIONS
                 </span>
-                <button onClick={() => setExpeditionMsg(expeditionMsg ? null : "Expedition management coming soon!")}
-                  style={{
-                    fontFamily: "'VT323', monospace", fontSize: "0.65rem", letterSpacing: "0.04em",
-                    background: "rgba(255,255,255,0.3)", color: "#78350f",
-                    border: "1.5px solid #e0b050", borderRadius: 3, padding: "1px 6px", cursor: "pointer",
-                  }}>MANAGE</button>
+                <span style={{ fontFamily: "'VT323', monospace", fontSize: "0.65rem", color: "#78350f" }}>
+                  {EXPEDITIONS.filter(e => e.ready).length} ready
+                </span>
               </div>
-              <div style={{
-                background: "#fff8f0", border: "2px solid #fbbf24", borderTop: "none",
-                borderRadius: "0 0 6px 6px", padding: "10px", boxShadow: "3px 3px 0 #e0b050",
-              }}>
-                {expeditionMsg && (
-                  <div style={{ background: "#fef3c7", border: "2px solid #fbbf24", borderRadius: 4, padding: "6px 10px", marginBottom: 8 }}>
-                    <p style={{ fontFamily: "'VT323', monospace", fontSize: "0.85rem", color: "#78350f" }}>{expeditionMsg}</p>
-                  </div>
-                )}
+              <div style={{ background: "#fff8f0", border: "2px solid #fbbf24", borderTop: "none", borderRadius: "0 0 6px 6px", padding: "10px", boxShadow: "3px 3px 0 #e0b050" }}>
                 <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                  {[
-                    { name: "Yokohama Night Patrol",    chars: ["🪄", "⚔️"], duration: "2h 15m", ready: false },
-                    { name: "Port Mafia Intel Gather",  chars: ["🎩", "🖤"], duration: "6h 00m", ready: true  },
-                  ].map((exp, i) => (
+                  {EXPEDITIONS.map((exp, i) => (
                     <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "#fff", border: "2px solid #e8d5a0", borderRadius: 4, padding: "8px 10px" }}>
                       <div>
                         <p style={{ fontFamily: "'VT323', monospace", fontSize: "0.85rem", color: "#1a3d52" }}>{exp.name}</p>
                         <div style={{ display: "flex", gap: 3, marginTop: 2 }}>
                           {exp.chars.map((e, j) => <span key={j} style={{ fontSize: "0.9rem" }}>{e}</span>)}
+                          <span style={{ fontFamily: "'VT323', monospace", fontSize: "0.65rem", color: "#d97706", marginLeft: 4 }}>+{exp.reward} coins</span>
                         </div>
                       </div>
                       <div>
                         {exp.ready && !collectedExpeditions.has(i) ? (
-                          <button onClick={() => setCollectedExpeditions(prev => new Set([...prev, i]))}
+                          <button onClick={() => {
+                            setCollectedExpeditions(prev => new Set([...prev, i]));
+                            onEarnCoins(exp.reward, `Expedition: ${exp.name}!`);
+                          }}
                             style={{ fontFamily: "'VT323', monospace", fontSize: "0.75rem", background: "#4ade80", color: "#fff", border: "2px solid #22c55e", borderRadius: 4, padding: "3px 8px", cursor: "pointer", boxShadow: "2px 2px 0 #22c55e" }}>
-                            ✓ COLLECT
+                            COLLECT
                           </button>
                         ) : exp.ready && collectedExpeditions.has(i) ? (
-                          <span style={{ fontFamily: "'VT323', monospace", fontSize: "0.8rem", color: "#22c55e" }}>✓ COLLECTED</span>
+                          <span style={{ fontFamily: "'VT323', monospace", fontSize: "0.8rem", color: "#22c55e" }}>
+                            <Check size={12} style={{ display: "inline", marginRight: 2 }} />DONE
+                          </span>
                         ) : (
                           <span style={{ fontFamily: "'VT323', monospace", fontSize: "0.75rem", color: "#8aaab8" }}>⏰ {exp.duration}</span>
                         )}
@@ -287,7 +305,7 @@ export function ProfilePage({ coins, ownedCards, username, avatar, xp, level, st
           </div>
         )}
 
-        {/* ── Achievements ─────────────────────────────────────── */}
+        {/* ── Achievements ── */}
         {activeTab === "achievements" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
             {ACHIEVEMENTS.map(ach => (
@@ -324,48 +342,70 @@ export function ProfilePage({ coins, ownedCards, username, avatar, xp, level, st
           </div>
         )}
 
-        {/* ── Buffs ────────────────────────────────────────────── */}
+        {/* ── Buffs ── */}
         {activeTab === "buffs" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             <div style={{ background: "#ddeef6", border: "2px solid #7ab2c8", borderRadius: 6, padding: "8px 10px", marginBottom: 4 }}>
-              <p style={{ fontSize: "0.72rem", color: "#2a5a70" }}>⚡ Spend Rare Drops to permanently boost your account. Earn them from SSR+ pulls and events.</p>
+              <p style={{ fontSize: "0.72rem", color: "#2a5a70" }}>⚡ Spend coins to permanently boost your account. You have <strong>{coins.toLocaleString()}</strong> coins.</p>
             </div>
-            {GLOBAL_BUFFS.map((buff, i) => (
-              <div key={buff.id} style={{
-                background: BUFF_COLORS[i % 4],
-                border: `3px solid ${BUFF_BORDERS[i % 4]}`,
-                borderRadius: 6, padding: "10px 12px",
-                boxShadow: `3px 3px 0 ${BUFF_BORDERS[i % 4]}`,
-              }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
-                      <span style={{ fontFamily: "'VT323', monospace", fontSize: "0.9rem", color: "#1a3d52" }}>{buff.name}</span>
-                      {buff.unlocked && (
-                        <span style={{ fontFamily: "'VT323', monospace", fontSize: "0.6rem", letterSpacing: "0.05em", background: "#4ade80", color: "#fff", border: "1.5px solid #22c55e", borderRadius: 3, padding: "1px 5px" }}>ACTIVE</span>
+            {GLOBAL_BUFFS.map((buff, i) => {
+              const isUnlocked = unlockedBuffIds.includes(buff.id);
+              const canAfford = coins >= buff.cost;
+              return (
+                <div key={buff.id} style={{
+                  background: BUFF_COLORS[i % 4],
+                  border: `3px solid ${BUFF_BORDERS[i % 4]}`,
+                  borderRadius: 6, padding: "10px 12px",
+                  boxShadow: `3px 3px 0 ${BUFF_BORDERS[i % 4]}`,
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
+                        <span style={{ fontFamily: "'VT323', monospace", fontSize: "0.9rem", color: "#1a3d52" }}>{buff.name}</span>
+                        {isUnlocked && (
+                          <span style={{ fontFamily: "'VT323', monospace", fontSize: "0.6rem", letterSpacing: "0.05em", background: "#4ade80", color: "#fff", border: "1.5px solid #22c55e", borderRadius: 3, padding: "1px 5px" }}>ACTIVE</span>
+                        )}
+                      </div>
+                      <p style={{ fontSize: "0.72rem", color: "#5a7d8a", marginBottom: 4 }}>{buff.description}</p>
+                      {!isUnlocked && (
+                        <span style={{ fontFamily: "'VT323', monospace", fontSize: "0.7rem", color: canAfford ? "#059669" : "#dc2626" }}>
+                          🪙 {buff.coinLabel}
+                        </span>
+                      )}
+                      {buffFeedback?.id === buff.id && (
+                        <p style={{ fontSize: "0.7rem", color: buffFeedback.msg === "Buff activated!" ? "#059669" : "#d97706", marginTop: 4, fontWeight: 600 }}>
+                          {buffFeedback.msg}
+                        </p>
                       )}
                     </div>
-                    <p style={{ fontSize: "0.72rem", color: "#5a7d8a", marginBottom: 4 }}>{buff.description}</p>
-                    <span style={{ fontFamily: "'VT323', monospace", fontSize: "0.7rem", color: "#dc2626" }}>💎 {buff.cost}</span>
-                    {buffFeedback === buff.id && (
-                      <p style={{ fontSize: "0.7rem", color: "#d97706", marginTop: 4, fontWeight: 600 }}>Not enough Rare Drops. Pull SSR+ cards!</p>
+                    {!isUnlocked && (
+                      <button onClick={() => handleUnlockBuff(buff)}
+                        style={{
+                          marginLeft: 10, fontFamily: "'VT323', monospace", fontSize: "0.8rem", letterSpacing: "0.06em",
+                          background: canAfford ? "#5b9aba" : "#94a3b8", color: "white",
+                          border: `2px solid ${canAfford ? "#3d7a98" : "#64748b"}`,
+                          borderRadius: 4, padding: "4px 10px", cursor: "pointer",
+                          boxShadow: canAfford ? "2px 2px 0 #3d7a98" : "none",
+                          opacity: canAfford ? 1 : 0.7,
+                        }}>UNLOCK</button>
+                    )}
+                    {isUnlocked && (
+                      <div style={{
+                        marginLeft: 10, width: 32, height: 32, borderRadius: "50%",
+                        background: "#4ade80", border: "2px solid #22c55e",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                      }}>
+                        <Check size={16} color="#fff" />
+                      </div>
                     )}
                   </div>
-                  {!buff.unlocked && (
-                    <button onClick={() => setBuffFeedback(buffFeedback === buff.id ? null : buff.id)}
-                      style={{
-                        marginLeft: 10, fontFamily: "'VT323', monospace", fontSize: "0.8rem", letterSpacing: "0.06em",
-                        background: "#5b9aba", color: "white", border: "2px solid #3d7a98",
-                        borderRadius: 4, padding: "4px 10px", cursor: "pointer", boxShadow: "2px 2px 0 #3d7a98",
-                      }}>UNLOCK</button>
-                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
-        {/* ── Leaderboard ──────────────────────────────────────── */}
+        {/* ── Leaderboard ── */}
         {activeTab === "leaderboard" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             <div style={{ display: "flex", gap: 5, marginBottom: 4 }}>
@@ -383,13 +423,18 @@ export function ProfilePage({ coins, ownedCards, username, avatar, xp, level, st
                 </button>
               ))}
             </div>
-            {leaderboardFilter !== "Global" && (
+
+            {leaderboardFilter === "Weekly" && (
               <div style={{ background: "#ddeef6", border: "2px solid #7ab2c8", borderRadius: 6, padding: "8px 12px", marginBottom: 4 }}>
-                <p style={{ fontSize: "0.75rem", color: "#5a7d8a" }}>
-                  {leaderboardFilter === "Friends" ? "Add friends to see rankings!" : "Weekly rankings reset every Monday."}
-                </p>
+                <p style={{ fontSize: "0.75rem", color: "#5a7d8a" }}>Weekly XP resets every Monday. Your this-week XP: <strong>{Math.round(xp * 0.18).toLocaleString()}</strong></p>
               </div>
             )}
+            {leaderboardFilter === "Friends" && (
+              <div style={{ background: "#ddeef6", border: "2px solid #7ab2c8", borderRadius: 6, padding: "8px 12px", marginBottom: 4 }}>
+                <p style={{ fontSize: "0.75rem", color: "#5a7d8a" }}>Showing your study group — keep up with your friends!</p>
+              </div>
+            )}
+
             {fullLeaderboard.map(entry => (
               <div key={entry.rank} style={{
                 display: "flex", alignItems: "center", gap: 10,
@@ -411,7 +456,7 @@ export function ProfilePage({ coins, ownedCards, username, avatar, xp, level, st
                 <span style={{ fontSize: "1.2rem" }}>{entry.avatar}</span>
                 <div style={{ flex: 1 }}>
                   <p style={{ fontFamily: "'VT323', monospace", fontSize: "0.9rem", color: "#1a3d52" }}>
-                    {entry.name}{"isUser" in entry && entry.isUser ? " (You)" : ""}
+                    {entry.name}
                   </p>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
@@ -424,7 +469,7 @@ export function ProfilePage({ coins, ownedCards, username, avatar, xp, level, st
           </div>
         )}
 
-        {/* ── Legal ────────────────────────────────────────────── */}
+        {/* ── Legal ── */}
         {activeTab === "legal" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             <div style={{ background: "#f0f8fc", border: "2px solid #7ab2c8", borderRadius: 6, padding: "12px 14px", boxShadow: "3px 3px 0 #9dc4d8" }}>

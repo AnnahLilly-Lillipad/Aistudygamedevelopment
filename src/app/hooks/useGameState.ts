@@ -7,6 +7,14 @@ export interface UserProfile {
   createdAt: number;
 }
 
+export interface DailyStats {
+  date: string;
+  studyMinutes: number;
+  quizAnswers: number;
+  battleWins: number;
+  gachaPulls: number;
+}
+
 export interface GameState {
   coins: number;
   ownedCards: OwnedCard[];
@@ -21,6 +29,8 @@ export interface GameState {
   totalPulls: number;
   ownedFrames: string[];
   equippedFrame: string;
+  dailyStats: DailyStats;
+  unlockedBuffIds: number[];
 }
 
 const STARTER_CARDS: OwnedCard[] = [
@@ -39,6 +49,10 @@ function xpToNextLevel(level: number): number {
   return level * 1000;
 }
 
+function freshDailyStats(): DailyStats {
+  return { date: todayStr(), studyMinutes: 0, quizAnswers: 0, battleWins: 0, gachaPulls: 0 };
+}
+
 function makeInitialState(): GameState {
   return {
     coins: 3200,
@@ -54,11 +68,18 @@ function makeInitialState(): GameState {
     totalPulls: 0,
     ownedFrames: ["standard"],
     equippedFrame: "standard",
+    dailyStats: freshDailyStats(),
+    unlockedBuffIds: [1, 2],
   };
 }
 
 function hydrateCards(raw: OwnedCard[]): OwnedCard[] {
   return raw.map(c => ({ ...c, obtainedAt: new Date(c.obtainedAt) }));
+}
+
+function ensureDailyStats(stats: DailyStats | undefined): DailyStats {
+  if (!stats || stats.date !== todayStr()) return freshDailyStats();
+  return stats;
 }
 
 function loadUser(): UserProfile | null {
@@ -76,6 +97,8 @@ function loadGameState(username: string): GameState {
     parsed.ownedCards = hydrateCards(parsed.ownedCards);
     if (!parsed.ownedFrames) parsed.ownedFrames = ["standard"];
     if (!parsed.equippedFrame) parsed.equippedFrame = "standard";
+    if (!parsed.unlockedBuffIds) parsed.unlockedBuffIds = [1, 2];
+    parsed.dailyStats = ensureDailyStats(parsed.dailyStats);
     return parsed;
   } catch { return makeInitialState(); }
 }
@@ -158,7 +181,14 @@ export function useGameState() {
           merged.set(card.characterId, { ...card, awakened: false });
         }
       });
-      return { ...prev, ownedCards: Array.from(merged.values()), totalPulls: prev.totalPulls + cards.length };
+      const today = todayStr();
+      const ds = prev.dailyStats.date === today ? prev.dailyStats : freshDailyStats();
+      return {
+        ...prev,
+        ownedCards: Array.from(merged.values()),
+        totalPulls: prev.totalPulls + cards.length,
+        dailyStats: { ...ds, gachaPulls: ds.gachaPulls + cards.length },
+      };
     });
   }, []);
 
@@ -179,7 +209,15 @@ export function useGameState() {
   }, []);
 
   const recordBattleWin = useCallback(() => {
-    setState(prev => ({ ...prev, totalBattleWins: prev.totalBattleWins + 1 }));
+    setState(prev => {
+      const today = todayStr();
+      const ds = prev.dailyStats.date === today ? prev.dailyStats : freshDailyStats();
+      return {
+        ...prev,
+        totalBattleWins: prev.totalBattleWins + 1,
+        dailyStats: { ...ds, battleWins: ds.battleWins + 1 },
+      };
+    });
     updateActivity();
   }, [updateActivity]);
 
@@ -195,6 +233,23 @@ export function useGameState() {
     const today = todayStr();
     return state.lastQuestReset === today ? state.claimedQuests : [];
   }, [state.claimedQuests, state.lastQuestReset]);
+
+  const trackStudyMinutes = useCallback((minutes: number) => {
+    setState(prev => {
+      const today = todayStr();
+      const ds = prev.dailyStats.date === today ? prev.dailyStats : freshDailyStats();
+      return { ...prev, dailyStats: { ...ds, studyMinutes: ds.studyMinutes + minutes } };
+    });
+    updateActivity();
+  }, [updateActivity]);
+
+  const trackQuizAnswer = useCallback(() => {
+    setState(prev => {
+      const today = todayStr();
+      const ds = prev.dailyStats.date === today ? prev.dailyStats : freshDailyStats();
+      return { ...prev, dailyStats: { ...ds, quizAnswers: ds.quizAnswers + 1 } };
+    });
+  }, []);
 
   const buyFrame = useCallback((frameId: string, price: number): boolean => {
     let success = false;
@@ -215,6 +270,20 @@ export function useGameState() {
     setState(prev => ({ ...prev, equippedFrame: frameId }));
   }, []);
 
+  const unlockBuff = useCallback((buffId: number, cost: number): boolean => {
+    let success = false;
+    setState(prev => {
+      if (prev.coins < cost || prev.unlockedBuffIds.includes(buffId)) return prev;
+      success = true;
+      return {
+        ...prev,
+        coins: prev.coins - cost,
+        unlockedBuffIds: [...prev.unlockedBuffIds, buffId],
+      };
+    });
+    return success;
+  }, []);
+
   return {
     user,
     state,
@@ -233,5 +302,8 @@ export function useGameState() {
     xpToNextLevel,
     buyFrame,
     equipFrame,
+    trackStudyMinutes,
+    trackQuizAnswer,
+    unlockBuff,
   };
 }
