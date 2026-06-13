@@ -56,11 +56,11 @@ export function ProfilePage({ coins, ownedCards, username, avatar, xp, level, st
   };
 
   const TABS = [
-    { id: "overview",      label: "🌊 OVERVIEW"    },
-    { id: "achievements",  label: "🏅 BADGES"       },
-    { id: "buffs",         label: "⚡ BUFFS"         },
-    { id: "leaderboard",   label: "🏆 RANKING"      },
-    { id: "legal",         label: "⚖️ LEGAL"        },
+    { id: "overview",      label: "OVERVIEW"    },
+    { id: "achievements",  label: "BADGES"      },
+    { id: "buffs",         label: "BUFFS"       },
+    { id: "leaderboard",   label: "RANKING"     },
+    { id: "legal",         label: "LEGAL"       },
   ] as const;
 
   const userLeaderboardEntry = { rank: 4, name: username, xp, avatar, isUser: true };
@@ -105,7 +105,7 @@ export function ProfilePage({ coins, ownedCards, username, avatar, xp, level, st
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <p style={{ fontFamily: "'VT323', monospace", fontSize: "0.7rem", color: "#7ab2c8", letterSpacing: "0.08em" }}>
-              🌊 SCHOLAR PROFILE
+              SCHOLAR PROFILE
             </p>
             <h2 style={{ fontFamily: "'VT323', monospace", fontSize: "1.6rem", color: "#cde5f0", letterSpacing: "0.04em", lineHeight: 1, marginBottom: 2 }}>
               {username} ✦
@@ -115,7 +115,7 @@ export function ProfilePage({ coins, ownedCards, username, avatar, xp, level, st
               background: "#ffd166", color: "#78350f",
               padding: "1px 8px", borderRadius: 3, border: "1.5px solid #e0b050",
             }}>
-              🐚 Aspiring Detective
+              Aspiring Detective
             </span>
           </div>
           <div style={{ textAlign: "right", flexShrink: 0 }}>
@@ -213,7 +213,7 @@ export function ProfilePage({ coins, ownedCards, username, avatar, xp, level, st
               }}>
                 <div style={{ width: 4, height: 14, background: "#5b9aba", borderRadius: 2 }} />
                 <span style={{ fontFamily: "'VT323', monospace", fontSize: "0.8rem", color: "#1a3d52", letterSpacing: "0.08em" }}>
-                  🌊 STUDY HEATMAP (13 WEEKS)
+                  STUDY HEATMAP (13 WEEKS)
                 </span>
               </div>
               <div style={{ background: "white", border: "2px solid #7ab2c8", borderTop: "none", borderRadius: "0 0 6px 6px", padding: "10px", boxShadow: "3px 3px 0 #9dc4d8" }}>
@@ -239,7 +239,7 @@ export function ProfilePage({ coins, ownedCards, username, avatar, xp, level, st
                 <span style={{ fontFamily: "'VT323', monospace", fontSize: "0.8rem", color: "#78350f", letterSpacing: "0.08em" }}>
                   🗺️ EXPEDITIONS
                 </span>
-                <button onClick={() => setExpeditionMsg(expeditionMsg ? null : "Expedition management coming soon! ⛵")}
+                <button onClick={() => setExpeditionMsg(expeditionMsg ? null : "Expedition management coming soon!")}
                   style={{
                     fontFamily: "'VT323', monospace", fontSize: "0.65rem", letterSpacing: "0.04em",
                     background: "rgba(255,255,255,0.3)", color: "#78350f",
@@ -386,7 +386,7 @@ export function ProfilePage({ coins, ownedCards, username, avatar, xp, level, st
             {leaderboardFilter !== "Global" && (
               <div style={{ background: "#ddeef6", border: "2px solid #7ab2c8", borderRadius: 6, padding: "8px 12px", marginBottom: 4 }}>
                 <p style={{ fontSize: "0.75rem", color: "#5a7d8a" }}>
-                  {leaderboardFilter === "Friends" ? "🐚 Add friends to see rankings!" : "🌊 Weekly rankings reset every Monday."}
+                  {leaderboardFilter === "Friends" ? "Add friends to see rankings!" : "Weekly rankings reset every Monday."}
                 </p>
               </div>
             )}
@@ -443,7 +443,7 @@ export function ProfilePage({ coins, ownedCards, username, avatar, xp, level, st
                 </div>
               ))}
               <p style={{ fontFamily: "'VT323', monospace", fontSize: "0.85rem", color: "#8aaab8", textAlign: "center", borderTop: "1px dashed #b0d0e2", paddingTop: 8, marginTop: 4 }}>
-                🌊 Made with ❤️ by a fan, for fans. 🐚
+                Made with ❤️ by a fan, for fans.
               </p>
             </div>
           </div>

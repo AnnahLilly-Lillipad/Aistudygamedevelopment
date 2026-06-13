@@ -89,7 +89,7 @@ function CardReveal({ char, index, revealed, onClick, size = "sm" }: CardRevealP
           style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)", background: "#1a3d52", borderColor: "#3d7a98" }}
         >
           <div className="text-center flex flex-col items-center gap-1">
-            <span style={{ fontSize: size === "lg" ? "1.8rem" : "1.1rem" }}>🐚</span>
+            <span style={{ fontSize: size === "lg" ? "1.8rem" : "1.1rem" }}>◆</span>
             <p className="vt" style={{ color: "rgba(255,255,255,0.7)", fontSize: size === "lg" ? "0.75rem" : "0.55rem" }}>TAP TO REVEAL</p>
           </div>
         </div>
@@ -102,9 +102,10 @@ interface Props {
   coins: number; ownedCards: OwnedCard[];
   onSpend: (amount: number) => void; onGain: (cards: OwnedCard[]) => void;
   pityCount: number; setPityCount: (n: number) => void;
+  equippedFrame: string;
 }
 
-export function GachaScreen({ coins, ownedCards, onSpend, onGain, pityCount, setPityCount }: Props) {
+export function GachaScreen({ coins, ownedCards, onSpend, onGain, pityCount, setPityCount, equippedFrame }: Props) {
   const [pulledCards, setPulledCards] = useState<Character[]>([]);
   const [revealed, setRevealed] = useState<boolean[]>([]);
   const [showResults, setShowResults] = useState(false);
@@ -166,10 +167,10 @@ export function GachaScreen({ coins, ownedCards, onSpend, onGain, pityCount, set
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div>
             <p style={{ fontFamily: "'VT323', monospace", fontSize: "1.5rem", color: "#cde5f0", letterSpacing: "0.08em", lineHeight: 1 }}>
-              🐚 TREASURE PULL ✦
+              TREASURE PULL ✦
             </p>
             <p style={{ fontFamily: "'VT323', monospace", fontSize: "0.75rem", color: "#7ab2c8", letterSpacing: "0.06em", marginTop: 2 }}>
-              🌊 dive deep · discover rare cards
+              dive deep · discover rare cards
             </p>
           </div>
           <div style={{ textAlign: "right" }}>
@@ -291,7 +292,7 @@ export function GachaScreen({ coins, ownedCards, onSpend, onGain, pityCount, set
           onMouseEnter={e => { if (coins >= PULL_COST.single) { e.currentTarget.style.boxShadow = "1px 1px 0 #3d7a98"; e.currentTarget.style.transform = "translate(2px,2px)"; }}}
           onMouseLeave={e => { e.currentTarget.style.boxShadow = "3px 3px 0 #3d7a98"; e.currentTarget.style.transform = "none"; }}
         >
-          <div style={{ fontSize: "1.05rem", color: "#1a3d52" }}>🐚 SINGLE PULL</div>
+          <div style={{ fontSize: "1.05rem", color: "#1a3d52" }}>SINGLE PULL</div>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 3, color: "#d97706", fontSize: "0.85rem", marginTop: 2 }}>
             <Coins size={11} /> {PULL_COST.single.toLocaleString()}
           </div>
@@ -357,7 +358,7 @@ export function GachaScreen({ coins, ownedCards, onSpend, onGain, pityCount, set
                 <div className="os-btn-red" onClick={close} style={{ cursor: "pointer" }} />
                 <div className="os-btn-yellow" /><div className="os-btn-green" />
                 <span className="os-titlebar-title" style={{ color: "#cde5f0" }}>
-                  {pulledCards.length === 1 ? "🐚 SINGLE PULL RESULT" : "🐚 10 PULL RESULTS"}
+                  {pulledCards.length === 1 ? "SINGLE PULL RESULT" : "10 PULL RESULTS"}
                 </span>
                 <div className="flex gap-2 ml-2">
                   <button onClick={revealAll} className="retro-btn text-xs py-0 px-2"
@@ -400,7 +401,7 @@ export function GachaScreen({ coins, ownedCards, onSpend, onGain, pityCount, set
                   disabled={coins < (pulledCards.length === 1 ? PULL_COST.single : PULL_COST.ten)}
                   className="retro-btn retro-btn-primary w-full py-2.5 disabled:opacity-50"
                 >
-                  <span className="vt" style={{ fontSize: "1.1rem" }}>🌊 PULL AGAIN</span>
+                  <span className="vt" style={{ fontSize: "1.1rem" }}>PULL AGAIN</span>
                 </button>
               </div>
             </motion.div>

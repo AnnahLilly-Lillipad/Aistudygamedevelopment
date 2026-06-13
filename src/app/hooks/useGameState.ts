@@ -19,12 +19,14 @@ export interface GameState {
   lastQuestReset: string;
   totalBattleWins: number;
   totalPulls: number;
+  ownedFrames: string[];
+  equippedFrame: string;
 }
 
 const STARTER_CARDS: OwnedCard[] = [
-  { characterId: 1, id: "init-1", level: 15, limitBreak: 0, awakened: false, obtainedAt: new Date() },
-  { characterId: 2, id: "init-2", level: 8, limitBreak: 0, awakened: false, obtainedAt: new Date() },
-  { characterId: 5, id: "init-5", level: 12, limitBreak: 1, awakened: false, obtainedAt: new Date() },
+  { characterId: 1,  id: "init-1",  level: 15, limitBreak: 0, awakened: false, obtainedAt: new Date() },
+  { characterId: 2,  id: "init-2",  level: 8,  limitBreak: 0, awakened: false, obtainedAt: new Date() },
+  { characterId: 5,  id: "init-5",  level: 12, limitBreak: 1, awakened: false, obtainedAt: new Date() },
   { characterId: 10, id: "init-10", level: 10, limitBreak: 0, awakened: false, obtainedAt: new Date() },
   { characterId: 11, id: "init-11", level: 20, limitBreak: 2, awakened: false, obtainedAt: new Date() },
 ];
@@ -50,6 +52,8 @@ function makeInitialState(): GameState {
     lastQuestReset: todayStr(),
     totalBattleWins: 0,
     totalPulls: 0,
+    ownedFrames: ["standard"],
+    equippedFrame: "standard",
   };
 }
 
@@ -70,6 +74,8 @@ function loadGameState(username: string): GameState {
     if (!raw) return makeInitialState();
     const parsed = JSON.parse(raw) as GameState;
     parsed.ownedCards = hydrateCards(parsed.ownedCards);
+    if (!parsed.ownedFrames) parsed.ownedFrames = ["standard"];
+    if (!parsed.equippedFrame) parsed.equippedFrame = "standard";
     return parsed;
   } catch { return makeInitialState(); }
 }
@@ -159,7 +165,9 @@ export function useGameState() {
   const awakenCard = useCallback((characterId: number) => {
     setState(prev => ({
       ...prev,
-      ownedCards: prev.ownedCards.map(c => c.characterId === characterId ? { ...c, awakened: true } : c),
+      ownedCards: prev.ownedCards.map(c =>
+        c.characterId === characterId ? { ...c, awakened: true } : c
+      ),
     }));
   }, []);
 
@@ -188,6 +196,25 @@ export function useGameState() {
     return state.lastQuestReset === today ? state.claimedQuests : [];
   }, [state.claimedQuests, state.lastQuestReset]);
 
+  const buyFrame = useCallback((frameId: string, price: number): boolean => {
+    let success = false;
+    setState(prev => {
+      if (prev.coins < price || prev.ownedFrames.includes(frameId)) return prev;
+      success = true;
+      return {
+        ...prev,
+        coins: prev.coins - price,
+        ownedFrames: [...prev.ownedFrames, frameId],
+        equippedFrame: frameId,
+      };
+    });
+    return success;
+  }, []);
+
+  const equipFrame = useCallback((frameId: string) => {
+    setState(prev => ({ ...prev, equippedFrame: frameId }));
+  }, []);
+
   return {
     user,
     state,
@@ -204,5 +231,7 @@ export function useGameState() {
     getClaimedQuests,
     updateActivity,
     xpToNextLevel,
+    buyFrame,
+    equipFrame,
   };
 }

@@ -416,7 +416,7 @@ export function GamesHub({ onEarnCoins }: Props) {
           🎮 GAME ROOM 🎮
         </p>
         <p style={{ fontFamily: "'VT323', monospace", fontSize: "0.75rem", color: "#7ab2c8", letterSpacing: "0.05em" }}>
-          🌊 pick a game · study · earn coins 🪙
+          pick a game · study · earn coins
         </p>
       </div>
 
@@ -511,7 +511,7 @@ export function GamesHub({ onEarnCoins }: Props) {
             <div>
               <p style={{ fontSize: "0.8rem", fontWeight: 600, color: "#1a3d52", marginBottom: 2 }}>Pick your subject</p>
               <p style={{ fontSize: "0.72rem", color: "#5a7d8a", lineHeight: 1.4 }}>
-                Each game lets you choose which topic to study — BSD lore, calculus, history, chemistry, and more. 🌊
+                Each game lets you choose which topic to study — BSD lore, calculus, history, chemistry, and more.
               </p>
             </div>
           </div>

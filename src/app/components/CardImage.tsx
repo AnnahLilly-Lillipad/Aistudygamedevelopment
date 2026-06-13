@@ -1,11 +1,14 @@
 import { useState } from "react";
 import type { Character } from "../data/characters";
+import { FRAMES_MAP, RARITY_BORDER_COLORS } from "../data/frames";
 
 interface Props {
   character: Character;
   size?: "xs" | "sm" | "md" | "lg";
   showName?: boolean;
   className?: string;
+  frameId?: string;
+  isAwakened?: boolean;
 }
 
 const SIZE_CLASSES = {
@@ -15,9 +18,24 @@ const SIZE_CLASSES = {
   lg: { container: "w-40 h-56", emoji: "text-7xl", name: "text-sm"       },
 };
 
-export function CardImage({ character, size = "md", showName = true, className = "" }: Props) {
+export function CardImage({
+  character,
+  size = "md",
+  showName = true,
+  className = "",
+  frameId = "standard",
+  isAwakened = false,
+}: Props) {
   const [imgError, setImgError] = useState(false);
   const s = SIZE_CLASSES[size];
+
+  const customFrame = frameId !== "standard" ? FRAMES_MAP[frameId] : null;
+  const borderColor = customFrame?.borderColor ?? RARITY_BORDER_COLORS[character.rarity] ?? "#7ab2c8";
+  const borderWidth = customFrame?.borderWidth ?? 2;
+  const boxShadow = [
+    customFrame?.shadow ?? "",
+    isAwakened ? "0 0 0 2px #fbbf24, 0 0 8px rgba(251,191,36,0.5)" : "",
+  ].filter(Boolean).join(", ") || "none";
 
   return (
     <div className={`relative overflow-hidden ${s.container} ${className}`}>
@@ -47,6 +65,16 @@ export function CardImage({ character, size = "md", showName = true, className =
           )}
         </div>
       )}
+
+      {/* Frame overlay — inset border directly on the image */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          border: `${borderWidth}px solid ${borderColor}`,
+          boxShadow,
+          zIndex: 10,
+        }}
+      />
     </div>
   );
 }

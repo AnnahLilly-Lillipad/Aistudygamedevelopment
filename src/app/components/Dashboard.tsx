@@ -36,12 +36,14 @@ interface Props {
   username: string; avatar: string; xp: number; level: number; streak: number;
   claimedQuests: number[]; onClaimQuest: (id: number) => void;
   onEarnCoins: (amount: number, reason: string) => void; totalBattleWins: number;
+  equippedFrame: string;
 }
 
 export function Dashboard({
   coins, ownedCards, onNavigate,
   username, avatar, xp, level, streak,
   claimedQuests, onClaimQuest, onEarnCoins, totalBattleWins,
+  equippedFrame,
 }: Props) {
   const recentChars = ownedCards.slice(-6).reverse()
     .map(oc => CHARACTERS.find(c => c.id === oc.characterId)).filter(Boolean);
@@ -283,15 +285,8 @@ export function Dashboard({
                   initial={{ opacity: 0, x: 5 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.18, delay: i * 0.04 }}
-                  style={{
-                    flexShrink: 0, width: 66,
-                    background: "#fff",
-                    border: "2px solid #e8e0d4",
-                    padding: "3px 3px 12px",
-                    boxShadow: "2px 2px 0 #c8c0b4",
-                    borderRadius: 3,
-                  }}>
-                  <CardImage character={char} size="xs" showName />
+                  style={{ flexShrink: 0 }}>
+                  <CardImage character={char} size="xs" showName frameId={equippedFrame} />
                 </motion.div>
               ))}
               <button onClick={() => onNavigate("collection")} style={{

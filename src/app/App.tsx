@@ -13,15 +13,15 @@ import { useGameState } from "./hooks/useGameState";
 
 type Tab = "home" | "study" | "games" | "gacha" | "collection" | "battle" | "chat" | "profile";
 
-const NAV_ITEMS: { id: Tab; emoji: string; label: string }[] = [
-  { id: "home",       emoji: "🏠", label: "Home"   },
-  { id: "study",      emoji: "📚", label: "Study"  },
-  { id: "games",      emoji: "🎮", label: "Games"  },
-  { id: "gacha",      emoji: "🐚", label: "Gacha"  },
-  { id: "collection", emoji: "🃏", label: "Cards"  },
-  { id: "battle",     emoji: "⚔️", label: "Battle" },
-  { id: "chat",       emoji: "💬", label: "Chat"   },
-  { id: "profile",    emoji: "🌊", label: "Me"     },
+const NAV_ITEMS: { id: Tab; label: string }[] = [
+  { id: "home",       label: "Home"       },
+  { id: "study",      label: "Study"      },
+  { id: "games",      label: "Games"      },
+  { id: "gacha",      label: "Gacha"      },
+  { id: "collection", label: "Cards"      },
+  { id: "battle",     label: "Battle"     },
+  { id: "chat",       label: "Chat"       },
+  { id: "profile",    label: "Profile"    },
 ];
 
 interface ToastNotif { id: string; message: string; coins?: number; }
@@ -44,13 +44,13 @@ export default function App() {
 
   const handleAwakenCard = useCallback((characterId: number) => {
     gs.awakenCard(characterId);
-    showToast("✦ Card Awakened! New power unlocked!");
+    showToast("Card Awakened! New power unlocked.");
   }, [gs, showToast]);
 
   const handleRecordWin = useCallback(() => {
     gs.recordBattleWin();
     gs.earnXp(100);
-    showToast("⚔️ Victory! +100 XP");
+    showToast("Victory! +100 XP");
   }, [gs, showToast]);
 
   const navigate = useCallback((tab: string) => setActiveTab(tab as Tab), []);
@@ -71,6 +71,7 @@ export default function App() {
             streak={state.streak} claimedQuests={claimedQuests}
             onClaimQuest={gs.claimQuest} onEarnCoins={handleEarnCoins}
             totalBattleWins={state.totalBattleWins}
+            equippedFrame={state.equippedFrame}
           />
         );
       case "study":      return <StudyMode onEarnCoins={handleEarnCoins} />;
@@ -81,12 +82,29 @@ export default function App() {
             coins={state.coins} ownedCards={state.ownedCards}
             onSpend={gs.spendCoins} onGain={gs.gainCards}
             pityCount={state.pityCount} setPityCount={gs.setPityCount}
+            equippedFrame={state.equippedFrame}
           />
         );
       case "collection":
-        return <CardCollection ownedCards={state.ownedCards} onNavigate={navigate} onAwaken={handleAwakenCard} />;
+        return (
+          <CardCollection
+            ownedCards={state.ownedCards} onNavigate={navigate}
+            onAwaken={handleAwakenCard}
+            equippedFrame={state.equippedFrame}
+            ownedFrames={state.ownedFrames}
+            coins={state.coins}
+            onBuyFrame={gs.buyFrame}
+            onEquipFrame={gs.equipFrame}
+          />
+        );
       case "battle":
-        return <BattleMode ownedCards={state.ownedCards} onEarnCoins={handleEarnCoins} onRecordWin={handleRecordWin} />;
+        return (
+          <BattleMode
+            ownedCards={state.ownedCards} onEarnCoins={handleEarnCoins}
+            onRecordWin={handleRecordWin}
+            equippedFrame={state.equippedFrame}
+          />
+        );
       case "chat":    return <AIChat />;
       case "profile":
         return (
@@ -107,7 +125,7 @@ export default function App() {
       className="size-full flex flex-col overflow-hidden dot-grid-bg"
       style={{ maxWidth: 480, margin: "0 auto" }}
     >
-      {/* ── Top system bar — coastal style ─────────────────── */}
+      {/* Top system bar */}
       <div style={{
         background: "linear-gradient(180deg, #b8ddf0 0%, #a8d0e6 100%)",
         borderBottom: "2px solid #7ab2c8",
@@ -116,14 +134,14 @@ export default function App() {
         flexShrink: 0,
       }}>
         <span style={{ fontFamily: "'VT323', monospace", fontSize: "0.85rem", color: "#1a3d52", letterSpacing: "0.08em" }}>
-          🌊 STUDYTALES ⛵
+          STUDYTALES
         </span>
         <span style={{ fontFamily: "'VT323', monospace", fontSize: "0.75rem", color: "#5a7d8a", letterSpacing: "0.04em" }}>
-          {gs.user.username} · 🪙{state.coins.toLocaleString()}
+          {gs.user.username} · {state.coins.toLocaleString()} coins
         </span>
       </div>
 
-      {/* ── Scrollable content ──────────────────────────────── */}
+      {/* Content */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden">
         <AnimatePresence mode="wait">
           <motion.div
@@ -139,14 +157,11 @@ export default function App() {
         </AnimatePresence>
       </div>
 
-      {/* ── Coastal nav bar ─────────────────────────────────── */}
-      <nav
-        className="flex-shrink-0 safe-bottom"
-        style={{
-          background: "linear-gradient(180deg, #cde5f0 0%, #b8d5e5 100%)",
-          borderTop: "2px solid #7ab2c8",
-        }}
-      >
+      {/* Nav bar */}
+      <nav className="flex-shrink-0 safe-bottom" style={{
+        background: "linear-gradient(180deg, #cde5f0 0%, #b8d5e5 100%)",
+        borderTop: "2px solid #7ab2c8",
+      }}>
         <div style={{ display: "flex" }}>
           {NAV_ITEMS.map((item, idx) => {
             const active = activeTab === item.id;
@@ -157,26 +172,17 @@ export default function App() {
                 style={{
                   flex: 1,
                   display: "flex", flexDirection: "column", alignItems: "center",
-                  justifyContent: "center", padding: "5px 2px 4px",
-                  position: "relative", WebkitTapHighlightColor: "transparent",
+                  justifyContent: "center", padding: "6px 2px 5px",
                   background: active ? "linear-gradient(180deg, #eef7fc 0%, #d8edf7 100%)" : "transparent",
                   borderRight: idx < NAV_ITEMS.length - 1 ? "1px solid rgba(122,178,200,0.35)" : "none",
                   borderTop: active ? "2.5px solid #5b9aba" : "2.5px solid transparent",
                   boxShadow: active ? "inset 0 1px 0 rgba(255,255,255,0.6)" : "none",
-                  transition: "background 0.1s", cursor: "pointer", gap: 1,
+                  transition: "background 0.1s", cursor: "pointer", WebkitTapHighlightColor: "transparent",
                 }}
               >
-                <span style={{ fontSize: "0.9rem", lineHeight: 1 }}>{item.emoji}</span>
-                {item.id === "gacha" && (
-                  <span style={{
-                    position: "absolute", top: 3, right: "14%",
-                    width: 6, height: 6, borderRadius: "50%",
-                    background: "#d94040", border: "1px solid white",
-                  }} />
-                )}
                 <span style={{
-                  fontFamily: "'VT323', monospace", fontSize: "0.55rem", letterSpacing: "0.04em",
-                  color: active ? "#1a3d52" : "#5a7d8a", lineHeight: 1,
+                  fontFamily: "'VT323', monospace", fontSize: "0.6rem", letterSpacing: "0.04em",
+                  color: active ? "#1a3d52" : "#5a7d8a",
                 }}>
                   {item.label.toUpperCase()}
                 </span>
@@ -186,7 +192,7 @@ export default function App() {
         </div>
       </nav>
 
-      {/* ── Toast notifications ─────────────────────────────── */}
+      {/* Toast notifications */}
       <div style={{
         position: "fixed", top: 36, left: "50%", transform: "translateX(-50%)",
         zIndex: 100, display: "flex", flexDirection: "column", gap: 6,
@@ -213,7 +219,7 @@ export default function App() {
                   padding: "1px 6px", borderRadius: 3,
                   border: "1.5px solid #fbbf24", flexShrink: 0,
                 }}>
-                  🪙 +{toast.coins}
+                  +{toast.coins} coins
                 </span>
               )}
               <span style={{ fontFamily: "'VT323', monospace", fontSize: "0.9rem", color: "#1a3d52", letterSpacing: "0.03em" }}>

@@ -24,11 +24,11 @@ const ENEMY_TEAMS: { name: string; chars: number[] }[] = [
 ];
 
 interface BattleCharState { char: Character; hp: number; maxHp: number; effectiveAtk: number; isAwakened: boolean; }
-interface Props { ownedCards: OwnedCard[]; onEarnCoins: (amount: number, reason: string) => void; onRecordWin?: () => void; }
+interface Props { ownedCards: OwnedCard[]; onEarnCoins: (amount: number, reason: string) => void; onRecordWin?: () => void; equippedFrame: string; }
 
 const DEMO_TEAM = [1, 2, 5];
 
-export function BattleMode({ ownedCards, onEarnCoins, onRecordWin }: Props) {
+export function BattleMode({ ownedCards, onEarnCoins, onRecordWin, equippedFrame }: Props) {
   const [state, setState] = useState<BattleState>("teamSelect");
   const [playerTeam, setPlayerTeam] = useState<number[]>([]);
   const [enemyTeamIdx, setEnemyTeamIdx] = useState(0);
@@ -149,7 +149,7 @@ export function BattleMode({ ownedCards, onEarnCoins, onRecordWin }: Props) {
             ⚔️ BATTLE MODE
           </p>
           <p style={{ fontFamily: "'VT323', monospace", fontSize: "0.75rem", color: "#fca5a5", letterSpacing: "0.05em" }}>
-            🌊 build your team · defeat enemies · earn coins
+            build your team · defeat enemies · earn coins
           </p>
         </div>
 
@@ -160,7 +160,7 @@ export function BattleMode({ ownedCards, onEarnCoins, onRecordWin }: Props) {
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 7, paddingLeft: 2 }}>
               <div style={{ width: 4, height: 16, background: "#dc2626", borderRadius: 2 }} />
               <span style={{ fontFamily: "'VT323', monospace", fontSize: "0.8rem", color: "#5a7d8a", letterSpacing: "0.1em" }}>
-                💀 CHOOSE ENEMY
+                CHOOSE ENEMY
               </span>
             </div>
             <div style={{ display: "flex", gap: 5, overflowX: "auto", marginBottom: 8 }} className="no-scrollbar">
@@ -179,13 +179,13 @@ export function BattleMode({ ownedCards, onEarnCoins, onRecordWin }: Props) {
                 </button>
               ))}
             </div>
-            {/* Enemy cards — no box, just row */}
+            {/* Enemy cards — CardImage handles its own border */}
             <div style={{ display: "flex", gap: 8 }}>
               {ENEMY_TEAMS[enemyTeamIdx].chars.map(id => {
                 const char = CHARACTERS.find(c => c.id === id)!;
                 return (
-                  <div key={id} style={{ flex: 1, borderRadius: 4, overflow: "hidden", border: "2px solid #f87171", boxShadow: "2px 2px 0 #f87171" }}>
-                    <CardImage character={char} size="sm" showName />
+                  <div key={id} style={{ flex: 1 }}>
+                    <CardImage character={char} size="sm" showName frameId="crimson" />
                   </div>
                 );
               })}
@@ -198,7 +198,7 @@ export function BattleMode({ ownedCards, onEarnCoins, onRecordWin }: Props) {
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <div style={{ width: 4, height: 16, background: "#059669", borderRadius: 2 }} />
                 <span style={{ fontFamily: "'VT323', monospace", fontSize: "0.8rem", color: "#5a7d8a", letterSpacing: "0.1em" }}>
-                  🌊 YOUR TEAM ({playerTeam.length}/3)
+                  YOUR TEAM ({playerTeam.length}/3)
                 </span>
               </div>
               {playerTeam.length > 0 && (
@@ -218,11 +218,9 @@ export function BattleMode({ ownedCards, onEarnCoins, onRecordWin }: Props) {
                   const isAwakened = ownedCards.find(oc => oc.characterId === id)?.awakened === true;
                   return (
                     <div key={id} style={{ flex: 1, position: "relative" }}>
-                      <div style={{ borderRadius: 4, overflow: "hidden", border: "2px solid #34d399", boxShadow: "2px 2px 0 #059669" }}>
-                        <CardImage character={char} size="sm" showName />
-                      </div>
+                      <CardImage character={char} size="sm" showName frameId={equippedFrame} isAwakened={isAwakened} />
                       {isAwakened && (
-                        <div className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center" style={{ background: "#f59e0b", boxShadow: "0 0 8px rgba(251,191,36,0.7)" }}>
+                        <div className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center" style={{ background: "#f59e0b", boxShadow: "0 0 8px rgba(251,191,36,0.7)", zIndex: 20 }}>
                           <Sparkles size={10} color="#fff" />
                         </div>
                       )}
@@ -234,7 +232,7 @@ export function BattleMode({ ownedCards, onEarnCoins, onRecordWin }: Props) {
 
             {ownedChars.length === 0 ? (
               <div style={{ border: "2px dashed #9dc4d8", borderRadius: 6, padding: "16px", textAlign: "center", background: "#f0f8fc" }}>
-                <p style={{ fontSize: "0.85rem", color: "#5a7d8a" }}>🌊 Pull some cards first!</p>
+                <p style={{ fontSize: "0.85rem", color: "#5a7d8a" }}>Pull some cards from Gacha first!</p>
               </div>
             ) : (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 6, maxHeight: 240, overflowY: "auto" }}>
@@ -245,13 +243,11 @@ export function BattleMode({ ownedCards, onEarnCoins, onRecordWin }: Props) {
                     <button key={char.id} onClick={() => toggleMember(char.id)}
                       style={{
                         position: "relative", borderRadius: 4, overflow: "visible",
-                        border: `2px solid ${isSelected ? (isAwakened ? "#f59e0b" : "#059669") : "#b0d0e2"}`,
-                        transform: isSelected ? "scale(1.06)" : "scale(1)",
+                        transform: isSelected ? "scale(1.08)" : "scale(1)",
                         transition: "all 0.1s", cursor: "pointer", background: "none",
+                        border: isSelected ? "2px solid #fbbf24" : "2px solid transparent",
                       }}>
-                      <div style={{ borderRadius: 3, overflow: "hidden" }}>
-                        <CardImage character={char} size="xs" showName />
-                      </div>
+                      <CardImage character={char} size="xs" showName frameId={isSelected ? equippedFrame : "standard"} isAwakened={isAwakened} />
                       {isAwakened && (
                         <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center z-10"
                           style={{ background: "#f59e0b", boxShadow: "0 0 6px rgba(251,191,36,0.8)" }}>
@@ -296,7 +292,7 @@ export function BattleMode({ ownedCards, onEarnCoins, onRecordWin }: Props) {
           <div style={{ fontSize: "4rem", marginBottom: 12 }}>{winner === "player" ? "🏆" : "💀"}</div>
         </motion.div>
         <p style={{ fontFamily: "'VT323', monospace", fontSize: "2.2rem", color: winner === "player" ? "#059669" : "#dc2626", letterSpacing: "0.08em" }}>
-          {winner === "player" ? "VICTORY! 🌊" : "DEFEATED 💀"}
+          {winner === "player" ? "VICTORY!" : "DEFEATED"}
         </p>
         {winner === "player" && (
           <div style={{ fontFamily: "'VT323', monospace", fontSize: "1.4rem", color: "#d97706", marginTop: 10 }}>🪙 +150 COINS</div>
@@ -366,7 +362,7 @@ export function BattleMode({ ownedCards, onEarnCoins, onRecordWin }: Props) {
       <div style={{ background: "#d1fae5", border: "3px solid #34d399", borderRadius: 6, overflow: "hidden", flexShrink: 0, boxShadow: "3px 3px 0 #059669" }}>
         <div style={{ background: "#059669", padding: "3px 10px" }}>
           <span style={{ fontFamily: "'VT323', monospace", fontSize: "0.75rem", color: "white", letterSpacing: "0.08em" }}>
-            🌊 YOUR TEAM
+            YOUR TEAM
           </span>
         </div>
         <div style={{ padding: "8px", display: "flex", gap: 8 }}>
@@ -433,7 +429,7 @@ export function BattleMode({ ownedCards, onEarnCoins, onRecordWin }: Props) {
 
       {(turn === "enemy" || isAnimating) && (
         <p className="text-center text-xs animate-pulse flex-shrink-0 vt" style={{ color: "#5a7d8a", fontSize: "0.85rem" }}>
-          🌊 Enemy is thinking…
+          Enemy is thinking…
         </p>
       )}
       {turn === "player" && !isAnimating && (isDefending || skillCooldown > 0) && (
