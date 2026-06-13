@@ -1,301 +1,171 @@
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * StudyTales - Global Styles & Animations
+ * 
+ * This file contains all the global CSS utilities and animations that bring
+ * StudyTales to life. From shimmer effects on gacha cards to pulse animations
+ * on stats - everything is designed to feel responsive and delightful.
+ * ═══════════════════════════════════════════════════════════════════════════
+ */
+
 @import './fonts.css';
 @import './tailwind.css';
 @import './theme.css';
 
-/* ── Dot-grid background ─────────────────────────────────── */
-.dot-grid-bg {
-  background-color: #cde5f0;
-  background-image: radial-gradient(circle, rgba(91,154,186,0.35) 1.5px, transparent 1.5px);
-  background-size: 20px 20px;
-}
+/* ─────────────────────────────────────────────────────────────────────────
+   KEYFRAME ANIMATIONS
+   These animations create the magic moments in the game
+   ────────────────────────────────────────────────────────────────────────── */
 
-/* ── Retro OS window ─────────────────────────────────────── */
-.os-window {
-  background: #ffffff;
-  border: 2px solid #7ab2c8;
-  border-radius: 6px;
-  overflow: hidden;
-  box-shadow: 3px 3px 0 rgba(91,154,186,0.25), inset 0 1px 0 rgba(255,255,255,0.8);
-}
-
-.os-titlebar {
-  background: linear-gradient(180deg, #cde5f0 0%, #b0d0e2 100%);
-  border-bottom: 2px solid #7ab2c8;
-  padding: 4px 8px;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  min-height: 26px;
-}
-
-.os-titlebar-title {
-  font-family: 'VT323', 'Courier New', monospace;
-  font-size: 0.9rem;
-  color: #1a3d52;
-  letter-spacing: 0.05em;
-  flex: 1;
-  text-align: center;
-  line-height: 1;
-}
-
-/* Mac-style colored window buttons */
-.os-btn-red   { width: 11px; height: 11px; border-radius: 50%; background: #ff6b6b; border: 1.5px solid #e05555; flex-shrink: 0; }
-.os-btn-yellow{ width: 11px; height: 11px; border-radius: 50%; background: #ffd166; border: 1.5px solid #e0b050; flex-shrink: 0; }
-.os-btn-green { width: 11px; height: 11px; border-radius: 50%; background: #9dc4d8; border: 1.5px solid #7ab2c8; flex-shrink: 0; }
-
-/* Keep old .os-btn for backward compat */
-.os-btn { width: 11px; height: 11px; border-radius: 50%; background: #9dc4d8; border: 1.5px solid #7ab2c8; flex-shrink: 0; }
-
-/* ── Pixel divider ────────────────────────────────────────── */
-.pixel-divider {
-  height: 2px;
-  background: repeating-linear-gradient(
-    90deg,
-    #7ab2c8 0px, #7ab2c8 4px,
-    transparent 4px, transparent 8px
-  );
-  margin: 8px 0;
-}
-
-/* ── Star divider ─────────────────────────────────────────── */
-.star-divider {
-  height: 2px;
-  background: repeating-linear-gradient(
-    90deg,
-    #fbbf24 0px, #fbbf24 3px,
-    transparent 3px, transparent 9px
-  );
-  margin: 6px 0;
-}
-
-/* ── Retro flat button ────────────────────────────────────── */
-.retro-btn {
-  border: 2px solid #7ab2c8;
-  background: #ddeef6;
-  color: #1a3d52;
-  font-family: 'VT323', 'Courier New', monospace;
-  font-size: 0.9rem;
-  letter-spacing: 0.06em;
-  padding: 4px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background 0.1s, box-shadow 0.1s;
-  box-shadow: 2px 2px 0 #7ab2c8;
-  line-height: 1.2;
-}
-
-.retro-btn:hover {
-  background: #cce0ec;
-  box-shadow: 1px 1px 0 #7ab2c8;
-  transform: translate(1px, 1px);
-}
-
-.retro-btn:active {
-  box-shadow: none;
-  transform: translate(2px, 2px);
-}
-
-.retro-btn-primary {
-  background: #5b9aba;
-  color: #fff;
-  border-color: #3d7a98;
-  box-shadow: 2px 2px 0 #3d7a98;
-}
-
-.retro-btn-primary:hover {
-  background: #4a88a8;
-  box-shadow: 1px 1px 0 #3d7a98;
-}
-
-/* ── VT323 mono label ─────────────────────────────────────── */
-.mono-label {
-  font-family: 'VT323', 'Courier New', monospace;
-  font-size: 0.85rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: #4a7d8a;
-}
-
-/* ── Library card panel ───────────────────────────────────── */
-.library-card {
-  background: #fdfbf4;
-  border: 2px solid #c4a868;
-  border-radius: 4px;
-  box-shadow: 3px 3px 0 #c4a868, inset 0 0 0 1px rgba(196,168,104,0.2);
-  overflow: hidden;
-}
-.library-card-header {
-  background: #c4a868;
-  padding: 4px 10px;
-  display: flex; align-items: center; gap: 6px;
-}
-
-/* ── Sticky note panel ────────────────────────────────────── */
-.sticky-note {
-  background: #fffde7;
-  border: 2px dashed #f9c74f;
-  border-radius: 4px;
-  box-shadow: 3px 3px 0 rgba(249,199,79,0.4);
-  overflow: hidden;
-  position: relative;
-}
-.sticky-note::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 50%; transform: translateX(-50%);
-  width: 24px; height: 8px;
-  background: rgba(249,199,79,0.5);
-  border-radius: 0 0 4px 4px;
-}
-
-/* ── Corkboard panel ──────────────────────────────────────── */
-.corkboard {
-  background: #f5e6d0;
-  border: 2px solid #c9a87c;
-  border-radius: 4px;
-  box-shadow: 3px 3px 0 #c9a87c;
-  overflow: hidden;
-}
-
-/* ── Ticket stub ──────────────────────────────────────────── */
-.ticket-stub {
-  background: #fff8f0;
-  border: 2px solid #e8a262;
-  border-radius: 6px;
-  overflow: hidden;
-  position: relative;
-}
-.ticket-stub::after {
-  content: '';
-  position: absolute;
-  top: 0; bottom: 0; right: 60px;
-  width: 2px;
-  background: repeating-linear-gradient(
-    180deg,
-    #e8a262 0px, #e8a262 4px,
-    transparent 4px, transparent 8px
-  );
-}
-
-/* ── Arcade panel ─────────────────────────────────────────── */
-.arcade-screen {
-  background: #0d1117;
-  border: 3px solid #1a3d52;
-  border-radius: 6px;
-  box-shadow: inset 0 0 20px rgba(91,154,186,0.2), 4px 4px 0 #1a3d52;
-  overflow: hidden;
-}
-
-/* ── Polaroid frame ───────────────────────────────────────── */
-.polaroid {
-  background: #fff;
-  border: 2px solid #e8e0d4;
-  padding: 4px 4px 16px;
-  box-shadow: 2px 2px 0 #c8c0b4;
-}
-
-/* ── Stamp / double border ────────────────────────────────── */
-.stamp-panel {
-  background: #fff;
-  border: 3px double #7ab2c8;
-  border-radius: 4px;
-  padding: 2px;
-  box-shadow: 2px 2px 0 rgba(91,154,186,0.3);
-  overflow: hidden;
-}
-
-/* ── Notebook paper ───────────────────────────────────────── */
-.notebook-paper {
-  background-color: #fefefe;
-  background-image:
-    linear-gradient(#e8f4fb 1px, transparent 1px),
-    linear-gradient(90deg, transparent 38px, #f8a4a4 38px, #f8a4a4 40px, transparent 40px);
-  background-size: 100% 24px, 100% 100%;
-  border: 2px solid #b0d0e2;
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-/* ── Report card ──────────────────────────────────────────── */
-.report-card {
-  background: #fffef9;
-  border: 2px solid #5b9aba;
-  border-radius: 2px;
-  box-shadow: 4px 4px 0 #3d7a98;
-  overflow: hidden;
-}
-
-/* ── Marquee ──────────────────────────────────────────────── */
-@keyframes marquee {
-  0%   { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
-.marquee-inner { animation: marquee 18s linear infinite; display: inline-flex; gap: 40px; white-space: nowrap; }
-
-/* ── Animations ───────────────────────────────────────────── */
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50%       { transform: translateY(-7px); }
-}
-
-@keyframes float-slow {
-  0%, 100% { transform: translateY(0px) rotate(-1deg); }
-  50%       { transform: translateY(-5px) rotate(1deg); }
-}
-
+/**
+ * Shimmer effect
+ * Used for gacha pulls and rare card reveals to make them feel special
+ */
 @keyframes shimmer {
-  0%   { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 
+/**
+ * Float animation
+ * Gentle floating motion for important UI elements
+ * Creates a feeling of lightness and elegance
+ */
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+/**
+ * Pulse ring effect
+ * Used for notifications and achievement popups
+ * Draws the player's attention naturally
+ */
 @keyframes pulse-ring {
-  0%   { box-shadow: 0 0 0 0 rgba(91,154,186,0.4); }
-  70%  { box-shadow: 0 0 0 8px rgba(91,154,186,0); }
-  100% { box-shadow: 0 0 0 0 rgba(91,154,186,0); }
+  0% {
+    box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(124, 58, 237, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(124, 58, 237, 0);
+  }
 }
 
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0; }
+/**
+ * Glow pulse effect
+ * For stat bars and progress indicators
+ * Makes progress feel rewarding
+ */
+@keyframes glow-pulse {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
-@keyframes wobble {
-  0%, 100% { transform: rotate(-1.5deg); }
-  50%       { transform: rotate(1.5deg); }
+/* ─────────────────────────────────────────────────────────────────────────
+   UTILITY ANIMATIONS
+   ────────────────────────────────────────────────────────────────────────── */
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
 }
 
-.animate-float  { animation: float 3s ease-in-out infinite; }
-.animate-float-slow { animation: float-slow 4s ease-in-out infinite; }
-.animate-pulse-ring { animation: pulse-ring 2s ease infinite; }
-.animate-blink  { animation: blink 1s step-end infinite; }
-.animate-wobble { animation: wobble 3s ease-in-out infinite; }
+.animate-pulse-ring {
+  animation: pulse-ring 2s ease infinite;
+}
 
-/* ── Card elevation helpers ───────────────────────────────── */
-.card-sm   { box-shadow: var(--shadow-sm); }
-.card-md   { box-shadow: var(--shadow-md); }
-.card-lg   { box-shadow: var(--shadow-lg); }
-.card-base { box-shadow: var(--shadow-card); }
+/* ─────────────────────────────────────────────────────────────────────────
+   SHADOW UTILITIES
+   Different shadow levels for a clean hierarchy
+   ────────────────────────────────────────────────────────────────────────── */
 
-/* ── Glass ────────────────────────────────────────────────── */
+.card-sm {
+  box-shadow: var(--shadow-sm);
+}
+
+.card-md {
+  box-shadow: var(--shadow-md);
+}
+
+.card-lg {
+  box-shadow: var(--shadow-lg);
+}
+
+.card-base {
+  box-shadow: var(--shadow-card);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   GLASS MORPHISM
+   Modern frosted glass effect for overlays and modals
+   ────────────────────────────────────────────────────────────────────────── */
+
 .glass {
   background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
-/* ── Safe area ────────────────────────────────────────────── */
+.glass-dark {
+  background: rgba(14, 11, 30, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   TEXT EFFECTS
+   ────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Gradient text for titles and important text
+ * Creates visual emphasis while maintaining readability
+ */
+.gradient-text {
+  background: linear-gradient(135deg, #7c3aed, #a855f7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   LAYOUT UTILITIES
+   ────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Safe area padding
+ * Important for notched devices (iPhone X, etc.)
+ * Ensures content is visible and not hidden by hardware
+ */
 .safe-bottom {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-/* ── Hide scrollbar but keep scroll ──────────────────────── */
+/* ─────────────────────────────────────────────────────────────────────────
+   SCROLLBAR STYLING
+   Hide scrollbar while preserving scroll functionality
+   Used in content areas where we want a clean look
+   ────────────────────────────────────────────────────────────────────────── */
+
 .no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
 }
 
-/* ── VT323 text helper ────────────────────────────────────── */
-.vt { font-family: 'VT323', monospace; }
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, and Opera */
+}
