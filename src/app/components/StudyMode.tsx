@@ -7,7 +7,6 @@ const POMODORO_WORK = 25 * 60;
 const POMODORO_SHORT = 5 * 60;
 const POMODORO_LONG = 15 * 60;
 
-// ─── Types ─────────────────────────────────────────────────────────────────────
 interface Flashcard { front: string; back: string; }
 interface QuizQuestion { question: string; options: string[]; answer: number; coins: number; }
 interface MatchPair { term: string; def: string; }
@@ -32,7 +31,6 @@ const CUSTOM_SET_COLORS = [
 ];
 const CUSTOM_SET_ICONS = ["📚", "🧠", "✍️", "💡", "🎯", "🌟", "📖", "🔬", "🎨", "🧩"];
 
-// ─── Per-set flashcard data ────────────────────────────────────────────────────
 const SET_FLASHCARDS: Record<number, Flashcard[]> = {
   1: [
     { front: "What is a derivative?", back: "Rate of change of a function. d/dx gives the slope at any point." },
@@ -107,7 +105,6 @@ const SET_MATCH: Record<number, MatchPair[]> = {
   5: [{ term: "F = ma", def: "2nd Law" }, { term: "½mv²", def: "Kinetic energy" }, { term: "9.8 m/s²", def: "Earth's gravity" }, { term: "3×10⁸ m/s", def: "Speed of light" }],
 };
 
-// ─── Auto-generate quiz from flashcards ────────────────────────────────────────
 function generateQuizFromCards(cards: Flashcard[]): QuizQuestion[] {
   if (cards.length < 2) return [];
   return cards.map((card, i) => {
@@ -123,36 +120,28 @@ function generateMatchFromCards(cards: Flashcard[]): MatchPair[] {
   return cards.slice(0, 6).map(c => ({ term: c.front.length > 30 ? c.front.slice(0, 30) + "…" : c.front, def: c.back.length > 35 ? c.back.slice(0, 35) + "…" : c.back }));
 }
 
-// ─── Parse imported text ────────────────────────────────────────────────────────
 function parseImportText(raw: string): Flashcard[] | null {
   const lines = raw.split("\n").map(l => l.trim()).filter(Boolean);
   if (lines.length === 0) return null;
-
   const separators = ["|", "\t", ";", "–", "—", " - "];
   const cards: Flashcard[] = [];
-
   for (const line of lines) {
     if (line.startsWith("#") || line.startsWith("//")) continue;
     let split: [string, string] | null = null;
     for (const sep of separators) {
       const idx = line.indexOf(sep);
-      if (idx > 0) {
-        split = [line.slice(0, idx).trim(), line.slice(idx + sep.length).trim()];
-        break;
-      }
+      if (idx > 0) { split = [line.slice(0, idx).trim(), line.slice(idx + sep.length).trim()]; break; }
       if (sep === " - ") {
         const m = line.match(/^(.+?)\s+-\s+(.+)$/);
         if (m) { split = [m[1].trim(), m[2].trim()]; break; }
       }
     }
-    if (split && split[0] && split[1]) {
-      cards.push({ front: split[0], back: split[1] });
-    }
+    if (split && split[0] && split[1]) cards.push({ front: split[0], back: split[1] });
   }
   return cards.length >= 2 ? cards : null;
 }
 
-// ─── Import Modal ───────────────────────────────────────────────────────────────
+// ─── Import Modal ──────────────────────────────────────────────────────────────
 function ImportModal({ onClose, onImport }: { onClose: () => void; onImport: (set: CustomStudySet) => void }) {
   const [step, setStep] = useState<"input" | "preview">("input");
   const [name, setName] = useState("");
@@ -165,23 +154,15 @@ function ImportModal({ onClose, onImport }: { onClose: () => void; onImport: (se
   const handleParse = () => {
     if (!name.trim()) { setError("Please enter a set name."); return; }
     const cards = parseImportText(rawText);
-    if (!cards) {
-      setError("Couldn't parse any cards. Make sure each line has a term and definition separated by | or a tab.");
-      return;
-    }
-    setParsed(cards);
-    setError(null);
-    setStep("preview");
+    if (!cards) { setError("Couldn't parse any cards. Each line needs term and definition separated by | or tab."); return; }
+    setParsed(cards); setError(null); setStep("preview");
   };
 
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = ev => {
-      setRawText(ev.target?.result as string ?? "");
-      if (!name) setName(file.name.replace(/\.[^.]+$/, ""));
-    };
+    reader.onload = ev => { setRawText(ev.target?.result as string ?? ""); if (!name) setName(file.name.replace(/\.[^.]+$/, "")); };
     reader.readAsText(file);
   };
 
@@ -189,138 +170,127 @@ function ImportModal({ onClose, onImport }: { onClose: () => void; onImport: (se
     if (!parsed) return;
     const colorIdx = Math.floor(Math.random() * CUSTOM_SET_COLORS.length);
     const iconIdx = Math.floor(Math.random() * CUSTOM_SET_ICONS.length);
-    onImport({
-      id: `custom-${Date.now()}`,
-      name: name.trim(),
-      subject: subject.trim() || "Custom",
-      cards: parsed,
-      color: CUSTOM_SET_COLORS[colorIdx],
-      icon: CUSTOM_SET_ICONS[iconIdx],
-      progress: 0,
-    });
+    onImport({ id: `custom-${Date.now()}`, name: name.trim(), subject: subject.trim() || "Custom", cards: parsed, color: CUSTOM_SET_COLORS[colorIdx], icon: CUSTOM_SET_ICONS[iconIdx], progress: 0 });
     onClose();
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 flex items-end" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-end" style={{ background: "rgba(0,0,0,0.6)" }} onClick={onClose}>
       <motion.div
         initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        className="bg-white w-full rounded-t-3xl p-5 pb-10 max-h-[85vh] overflow-y-auto"
+        className="os-window w-full max-h-[85vh] overflow-y-auto"
+        style={{ borderRadius: "8px 8px 0 0" }}
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between mb-4">
-          <h3 style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: "1.2rem" }}>
-            {step === "input" ? "Import Study Set" : "Preview"}
-          </h3>
-          <button onClick={onClose} className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-            <X size={16} className="text-muted-foreground" />
-          </button>
+        <div className="os-titlebar">
+          <div className="os-btn-red" onClick={onClose} style={{ cursor: "pointer" }} />
+          <div className="os-btn-yellow" /><div className="os-btn-green" />
+          <span className="os-titlebar-title">{step === "input" ? "IMPORT STUDY SET" : "PREVIEW CARDS"}</span>
         </div>
 
-        {step === "input" ? (
-          <div className="space-y-4">
-            <div>
-              <label className="text-xs font-bold text-muted-foreground mb-1 block">SET NAME *</label>
-              <input
-                className="w-full border-2 border-border rounded-xl px-3 py-2.5 text-sm font-semibold outline-none focus:border-primary transition-colors"
-                placeholder="e.g. Spanish Vocab Chapter 3"
-                value={name}
-                onChange={e => setName(e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="text-xs font-bold text-muted-foreground mb-1 block">SUBJECT</label>
-              <input
-                className="w-full border-2 border-border rounded-xl px-3 py-2.5 text-sm font-semibold outline-none focus:border-primary transition-colors"
-                placeholder="e.g. Languages, Science, History…"
-                value={subject}
-                onChange={e => setSubject(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label className="text-xs font-bold text-muted-foreground mb-1 block">PASTE CARDS</label>
-              <div className="bg-muted/40 rounded-xl p-3 mb-2 text-xs text-muted-foreground space-y-0.5 border border-dashed border-border">
-                <p className="font-bold text-foreground">Format (one card per line):</p>
-                <p>term <span className="bg-border px-1 rounded font-mono">|</span> definition</p>
-                <p>term <span className="bg-border px-1 rounded font-mono">TAB</span> definition</p>
-                <p>term <span className="bg-border px-1 rounded font-mono"> - </span> definition</p>
+        <div className="p-5 pb-10" style={{ background: "#f0f8fc" }}>
+          {step === "input" ? (
+            <div className="space-y-4">
+              <div>
+                <label className="mono-label block mb-1" style={{ fontSize: "0.7rem" }}>SET NAME *</label>
+                <input
+                  className="w-full border-2 rounded px-3 py-2 text-sm font-semibold outline-none"
+                  style={{ borderColor: "#7ab2c8", background: "#fff", color: "#1a3d52" }}
+                  placeholder="e.g. Spanish Vocab Chapter 3"
+                  value={name} onChange={e => setName(e.target.value)}
+                />
               </div>
-              <textarea
-                className="w-full border-2 border-border rounded-xl p-3 text-sm outline-none focus:border-primary transition-colors resize-none"
-                rows={8}
-                placeholder={"Bonjour | Hello\nMerci | Thank you\nS'il vous plaît | Please"}
-                value={rawText}
-                onChange={e => setRawText(e.target.value)}
-                style={{ fontFamily: "monospace" }}
-              />
-            </div>
-
-            <div className="flex items-center gap-3">
-              <div className="flex-1 h-px bg-border" />
-              <span className="text-xs text-muted-foreground font-semibold">OR</span>
-              <div className="flex-1 h-px bg-border" />
-            </div>
-
-            <button
-              onClick={() => fileRef.current?.click()}
-              className="w-full py-3 rounded-xl border-2 border-dashed border-border flex items-center justify-center gap-2 text-sm font-semibold text-muted-foreground hover:border-primary hover:text-primary transition-colors"
-            >
-              <Upload size={16} />
-              Upload .txt or .csv file
-            </button>
-            <input ref={fileRef} type="file" accept=".txt,.csv,.tsv" className="hidden" onChange={handleFile} />
-
-            {error && (
-              <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl p-3">
-                <AlertCircle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
-                <p className="text-xs text-red-600 font-semibold">{error}</p>
+              <div>
+                <label className="mono-label block mb-1" style={{ fontSize: "0.7rem" }}>SUBJECT</label>
+                <input
+                  className="w-full border-2 rounded px-3 py-2 text-sm font-semibold outline-none"
+                  style={{ borderColor: "#7ab2c8", background: "#fff", color: "#1a3d52" }}
+                  placeholder="e.g. Languages, Science, History…"
+                  value={subject} onChange={e => setSubject(e.target.value)}
+                />
               </div>
-            )}
-
-            <button
-              onClick={handleParse}
-              disabled={!rawText.trim() || !name.trim()}
-              className="w-full py-3.5 rounded-2xl bg-primary text-white font-bold text-sm disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
-              style={{ fontFamily: "'Outfit', sans-serif" }}
-            >
-              Preview Cards →
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4">
-              <p className="font-bold text-sm" style={{ fontFamily: "'Outfit', sans-serif" }}>{name}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{subject || "Custom"} · {parsed?.length} cards found</p>
-            </div>
-            <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-              {parsed?.map((card, i) => (
-                <div key={i} className="bg-white border border-border rounded-xl p-3 flex gap-3">
-                  <span className="text-xs text-muted-foreground font-mono mt-0.5 w-5 flex-shrink-0">{i + 1}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold truncate">{card.front}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{card.back}</p>
-                  </div>
+              <div>
+                <label className="mono-label block mb-1" style={{ fontSize: "0.7rem" }}>PASTE CARDS</label>
+                <div className="rounded p-3 mb-2 text-xs space-y-0.5 border-2" style={{ background: "#ddeef6", borderColor: "#7ab2c8", borderStyle: "dashed" }}>
+                  <p className="font-bold" style={{ color: "#1a3d52" }}>Format (one card per line):</p>
+                  <p style={{ color: "#5a7d8a" }}>term <span className="px-1 rounded font-mono" style={{ background: "#b0d0e2" }}>|</span> definition</p>
+                  <p style={{ color: "#5a7d8a" }}>term <span className="px-1 rounded font-mono" style={{ background: "#b0d0e2" }}>TAB</span> definition</p>
+                  <p style={{ color: "#5a7d8a" }}>term <span className="px-1 rounded font-mono" style={{ background: "#b0d0e2" }}> - </span> definition</p>
                 </div>
-              ))}
-            </div>
-            <div className="flex gap-3">
-              <button onClick={() => { setStep("input"); setError(null); }} className="flex-1 py-3 rounded-2xl bg-white border-2 border-border font-bold text-sm">
-                ← Edit
+                <textarea
+                  className="w-full border-2 rounded p-3 text-sm outline-none resize-none"
+                  style={{ borderColor: "#7ab2c8", background: "#fff", color: "#1a3d52", fontFamily: "monospace" }}
+                  rows={8}
+                  placeholder={"Bonjour | Hello\nMerci | Thank you\nS'il vous plaît | Please"}
+                  value={rawText} onChange={e => setRawText(e.target.value)}
+                />
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="flex-1 h-px" style={{ background: "#b0d0e2" }} />
+                <span className="mono-label" style={{ fontSize: "0.65rem" }}>OR</span>
+                <div className="flex-1 h-px" style={{ background: "#b0d0e2" }} />
+              </div>
+
+              <button
+                onClick={() => fileRef.current?.click()}
+                className="retro-btn w-full py-3 flex items-center justify-center gap-2 text-sm"
+                style={{ borderStyle: "dashed" }}
+              >
+                <Upload size={14} /> Upload .txt or .csv file
               </button>
-              <button onClick={handleConfirm} className="flex-1 py-3 rounded-2xl bg-primary text-white font-bold text-sm" style={{ fontFamily: "'Outfit', sans-serif" }}>
-                Add Set ✓
+              <input ref={fileRef} type="file" accept=".txt,.csv,.tsv" className="hidden" onChange={handleFile} />
+
+              {error && (
+                <div className="flex items-start gap-2 rounded p-3 border-2" style={{ background: "#ffeaea", borderColor: "#f87171" }}>
+                  <AlertCircle size={14} style={{ color: "#dc2626", flexShrink: 0, marginTop: 2 }} />
+                  <p className="text-xs font-semibold" style={{ color: "#b91c1c" }}>{error}</p>
+                </div>
+              )}
+
+              <button
+                onClick={handleParse}
+                disabled={!rawText.trim() || !name.trim()}
+                className="retro-btn retro-btn-primary w-full py-3 disabled:opacity-40"
+              >
+                <span className="vt" style={{ fontSize: "1rem" }}>PREVIEW CARDS →</span>
               </button>
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="space-y-4">
+              <div className="rounded p-4 border-2" style={{ background: "#ddeef6", borderColor: "#7ab2c8" }}>
+                <p className="font-bold text-sm" style={{ color: "#1a3d52" }}>{name}</p>
+                <p className="text-xs mt-0.5" style={{ color: "#5a7d8a" }}>{subject || "Custom"} · {parsed?.length} cards found</p>
+              </div>
+              <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                {parsed?.map((card, i) => (
+                  <div key={i} className="os-window">
+                    <div className="flex gap-3 p-3" style={{ background: "#fff" }}>
+                      <span className="mono-label w-5 flex-shrink-0 mt-0.5" style={{ fontSize: "0.6rem" }}>{i + 1}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold truncate" style={{ color: "#1a3d52" }}>{card.front}</p>
+                        <p className="text-xs mt-0.5 line-clamp-2" style={{ color: "#5a7d8a" }}>{card.back}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-3">
+                <button onClick={() => { setStep("input"); setError(null); }} className="retro-btn flex-1 py-2.5">← EDIT</button>
+                <button onClick={handleConfirm} className="retro-btn retro-btn-primary flex-1 py-2.5">
+                  <span className="vt" style={{ fontSize: "1rem" }}>ADD SET ✓</span>
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </motion.div>
     </div>
   );
 }
 
-// ─── Inline Quiz ──────────────────────────────────────────────────────────────
+// ─── Inline Quiz ───────────────────────────────────────────────────────────────
 function InlineQuiz({ setId, customCards, setName, onBack, onEarnCoins }: {
   setId: number | string; customCards?: Flashcard[]; setName: string; onBack: () => void;
   onEarnCoins: (amount: number, reason: string) => void;
@@ -339,13 +309,12 @@ function InlineQuiz({ setId, customCards, setName, onBack, onEarnCoins }: {
   if (questions.length === 0) return (
     <div className="flex-1 flex flex-col items-center justify-center p-8 text-center gap-4">
       <div className="text-4xl">😅</div>
-      <p className="font-bold" style={{ fontFamily: "'Outfit', sans-serif" }}>Need at least 2 cards to generate a quiz.</p>
-      <button onClick={onBack} className="py-3 px-6 rounded-2xl bg-primary text-white font-bold">Go Back</button>
+      <p className="vt" style={{ fontSize: "1.1rem", color: "#1a3d52" }}>Need at least 2 cards to generate a quiz.</p>
+      <button onClick={onBack} className="retro-btn retro-btn-primary py-2 px-6">GO BACK</button>
     </div>
   );
 
   const q = questions[qIdx];
-
   const handleAnswer = (i: number) => {
     if (selected !== null) return;
     setSelected(i);
@@ -363,36 +332,42 @@ function InlineQuiz({ setId, customCards, setName, onBack, onEarnCoins }: {
   if (done) return (
     <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
       <div className="text-5xl mb-3">🎉</div>
-      <h3 style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: "1.5rem" }}>Quiz Done!</h3>
-      <p className="text-muted-foreground mt-1">{score}/{questions.length} correct</p>
-      <div className="text-2xl font-bold text-amber-500 mt-3">🪙 +{totalCoins}</div>
+      <p className="vt" style={{ fontSize: "1.8rem", color: "#1a3d52" }}>QUIZ DONE!</p>
+      <p className="mt-1" style={{ color: "#5a7d8a" }}>{score}/{questions.length} correct</p>
+      <div className="vt mt-3" style={{ fontSize: "1.4rem", color: "#d97706" }}>🪙 +{totalCoins}</div>
       <div className="flex gap-3 mt-6 w-full max-w-xs">
-        <button onClick={onBack} className="flex-1 py-3 rounded-2xl bg-white border-2 border-border font-bold">Back</button>
-        <button onClick={() => { setQIdx(0); setSelected(null); setScore(0); setTotalCoins(0); setDone(false); setStreak(0); }} className="flex-1 py-3 rounded-2xl bg-primary text-white font-bold">Again</button>
+        <button onClick={onBack} className="retro-btn flex-1 py-2.5">BACK</button>
+        <button onClick={() => { setQIdx(0); setSelected(null); setScore(0); setTotalCoins(0); setDone(false); setStreak(0); }} className="retro-btn retro-btn-primary flex-1 py-2.5">AGAIN</button>
       </div>
     </div>
   );
 
   return (
-    <div className="flex-1 flex flex-col p-4">
-      <div className="flex items-center gap-3 mb-4">
-        <button onClick={onBack} className="w-9 h-9 rounded-xl bg-white border border-border flex items-center justify-center flex-shrink-0">
-          <X size={18} className="text-muted-foreground" />
+    <div className="flex-1 flex flex-col p-3">
+      <div className="flex items-center gap-3 mb-3">
+        <button onClick={onBack} className="retro-btn w-9 h-9 flex items-center justify-center p-0">
+          <X size={16} style={{ color: "#5a7d8a" }} />
         </button>
         <div className="flex-1">
-          <p className="text-xs text-muted-foreground font-semibold">{setName} · Quiz</p>
-          <div className="h-1.5 bg-muted rounded-full mt-1 overflow-hidden">
-            <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${(qIdx / questions.length) * 100}%` }} />
+          <p className="mono-label" style={{ fontSize: "0.65rem" }}>{setName} · QUIZ</p>
+          <div className="h-2 rounded overflow-hidden border mt-1" style={{ background: "#ddeef6", borderColor: "#7ab2c8" }}>
+            <div className="h-full transition-all" style={{ width: `${(qIdx / questions.length) * 100}%`, background: "#5b9aba" }} />
           </div>
         </div>
-        <span className="text-xs text-muted-foreground">{qIdx + 1}/{questions.length}</span>
+        <span className="mono-label" style={{ fontSize: "0.65rem" }}>{qIdx + 1}/{questions.length}</span>
       </div>
 
       <AnimatePresence mode="wait">
         <motion.div key={qIdx} initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} className="flex-1 flex flex-col">
-          <div className="bg-white rounded-3xl p-5 border border-border shadow-sm mb-4">
-            <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: "1.05rem", lineHeight: 1.4 }}>{q.question}</p>
-            <p className="text-xs text-amber-500 font-semibold mt-2">🪙 +{q.coins}{streak > 1 ? ` · 🔥 ${streak}x` : ""}</p>
+          <div className="os-window mb-3">
+            <div className="os-titlebar py-1">
+              <div className="os-btn-green" />
+              <span className="os-titlebar-title" style={{ fontSize: "0.7rem" }}>QUESTION {qIdx + 1}</span>
+            </div>
+            <div className="p-4" style={{ background: "#fff" }}>
+              <p className="font-semibold" style={{ fontSize: "1rem", lineHeight: 1.4, color: "#1a3d52" }}>{q.question}</p>
+              <p className="text-xs font-semibold mt-2" style={{ color: "#d97706" }}>🪙 +{q.coins}{streak > 1 ? ` · 🔥 ${streak}x` : ""}</p>
+            </div>
           </div>
           <div className="space-y-2.5">
             {q.options.map((opt, i) => {
@@ -400,14 +375,19 @@ function InlineQuiz({ setId, customCards, setName, onBack, onEarnCoins }: {
               const isSelected = i === selected;
               return (
                 <button key={i} onClick={() => handleAnswer(i)} disabled={selected !== null}
-                  className={`w-full text-left rounded-2xl p-4 border-2 font-semibold text-sm transition-all ${selected === null ? "bg-white border-border hover:border-primary"
-                    : isCorrect ? "bg-green-50 border-green-400 text-green-700"
-                    : isSelected ? "bg-red-50 border-red-400 text-red-700"
-                    : "bg-white border-border opacity-40"}`}>
+                  className="retro-btn w-full text-left py-3 px-4"
+                  style={{
+                    background: selected === null ? "#fff" : isCorrect ? "#d1f0e0" : isSelected ? "#ffeaea" : "#fff",
+                    borderColor: selected === null ? "#7ab2c8" : isCorrect ? "#22c55e" : isSelected ? "#f87171" : "#b0d0e2",
+                    color: selected === null ? "#1a3d52" : isCorrect ? "#166534" : isSelected ? "#b91c1c" : "#9ab3bf",
+                    opacity: selected !== null && !isCorrect && !isSelected ? 0.5 : 1,
+                    fontSize: "0.9rem",
+                  }}
+                >
                   <div className="flex items-center justify-between">
                     <span>{opt}</span>
-                    {selected !== null && isCorrect && <Check size={16} className="text-green-500" />}
-                    {isSelected && !isCorrect && <X size={16} className="text-red-500" />}
+                    {selected !== null && isCorrect && <Check size={14} style={{ color: "#22c55e" }} />}
+                    {isSelected && !isCorrect && <X size={14} style={{ color: "#dc2626" }} />}
                   </div>
                 </button>
               );
@@ -419,15 +399,12 @@ function InlineQuiz({ setId, customCards, setName, onBack, onEarnCoins }: {
   );
 }
 
-// ─── Inline Flashcards ────────────────────────────────────────────────────────
+// ─── Inline Flashcards ─────────────────────────────────────────────────────────
 function InlineFlashcards({ setId, customCards, setName, onBack, onEarnCoins }: {
   setId: number | string; customCards?: Flashcard[]; setName: string; onBack: () => void;
   onEarnCoins: (amount: number, reason: string) => void;
 }) {
-  const cards: Flashcard[] = typeof setId === "string"
-    ? (customCards ?? [])
-    : (SET_FLASHCARDS[setId as number] ?? []);
-
+  const cards: Flashcard[] = typeof setId === "string" ? (customCards ?? []) : (SET_FLASHCARDS[setId as number] ?? []);
   const [idx, setIdx] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [seen, setSeen] = useState<Set<number>>(new Set([0]));
@@ -438,54 +415,56 @@ function InlineFlashcards({ setId, customCards, setName, onBack, onEarnCoins }: 
   if (cards.length === 0) return (
     <div className="flex-1 flex flex-col items-center justify-center p-8 text-center gap-4">
       <div className="text-4xl">📭</div>
-      <p className="font-bold" style={{ fontFamily: "'Outfit', sans-serif" }}>No flashcards in this set yet.</p>
-      <button onClick={onBack} className="py-3 px-6 rounded-2xl bg-primary text-white font-bold">Go Back</button>
+      <p className="vt" style={{ fontSize: "1.1rem", color: "#1a3d52" }}>No flashcards in this set yet.</p>
+      <button onClick={onBack} className="retro-btn retro-btn-primary py-2 px-6">GO BACK</button>
     </div>
   );
 
   if (done) return (
     <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
       <div className="text-5xl mb-3">🃏</div>
-      <h3 style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: "1.5rem" }}>All Done!</h3>
-      <p className="text-muted-foreground mt-1">Reviewed {cards.length} cards</p>
-      <div className="text-2xl font-bold text-amber-500 mt-3">🪙 +40</div>
+      <p className="vt" style={{ fontSize: "1.8rem", color: "#1a3d52" }}>ALL DONE!</p>
+      <p className="mt-1" style={{ color: "#5a7d8a" }}>Reviewed {cards.length} cards</p>
+      <div className="vt mt-3" style={{ fontSize: "1.4rem", color: "#d97706" }}>🪙 +40</div>
       <div className="flex gap-3 mt-6 w-full max-w-xs">
-        <button onClick={onBack} className="flex-1 py-3 rounded-2xl bg-white border-2 border-border font-bold">Back</button>
-        <button onClick={() => { setIdx(0); setFlipped(false); setSeen(new Set([0])); setDone(false); }} className="flex-1 py-3 rounded-2xl bg-primary text-white font-bold">Again</button>
+        <button onClick={onBack} className="retro-btn flex-1 py-2.5">BACK</button>
+        <button onClick={() => { setIdx(0); setFlipped(false); setSeen(new Set([0])); setDone(false); }} className="retro-btn retro-btn-primary flex-1 py-2.5">AGAIN</button>
       </div>
     </div>
   );
 
   return (
-    <div className="flex-1 flex flex-col p-4 items-center">
+    <div className="flex-1 flex flex-col p-3 items-center">
       <div className="flex items-center gap-3 w-full mb-3">
-        <button onClick={onBack} className="w-9 h-9 rounded-xl bg-white border border-border flex items-center justify-center flex-shrink-0">
-          <X size={18} className="text-muted-foreground" />
+        <button onClick={onBack} className="retro-btn w-9 h-9 flex items-center justify-center p-0">
+          <X size={16} style={{ color: "#5a7d8a" }} />
         </button>
         <div className="flex-1">
-          <p className="text-xs text-muted-foreground font-semibold">{setName} · Flashcards</p>
-          <div className="h-1.5 bg-muted rounded-full mt-1 overflow-hidden">
-            <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${(seen.size / cards.length) * 100}%` }} />
+          <p className="mono-label" style={{ fontSize: "0.65rem" }}>{setName} · FLASHCARDS</p>
+          <div className="h-2 rounded overflow-hidden border mt-1" style={{ background: "#ddeef6", borderColor: "#7ab2c8" }}>
+            <div className="h-full transition-all" style={{ width: `${(seen.size / cards.length) * 100}%`, background: "#5b9aba" }} />
           </div>
         </div>
-        <span className="text-xs text-muted-foreground">{idx + 1}/{cards.length}</span>
+        <span className="mono-label" style={{ fontSize: "0.65rem" }}>{idx + 1}/{cards.length}</span>
       </div>
-      <p className="text-muted-foreground text-xs mb-3">Tap card to flip · +40 🪙 on complete</p>
+      <p className="mono-label mb-3" style={{ fontSize: "0.65rem" }}>TAP CARD TO FLIP · +40 🪙 ON COMPLETE</p>
       <div className="w-full max-w-sm" style={{ perspective: 800 }} onClick={() => setFlipped(f => !f)}>
         <motion.div animate={{ rotateY: flipped ? 180 : 0 }} transition={{ duration: 0.45 }} style={{ transformStyle: "preserve-3d", position: "relative", height: 200 }}>
-          <div className="absolute inset-0 rounded-3xl bg-white border-2 border-primary shadow-lg flex items-center justify-center p-6 text-center" style={{ backfaceVisibility: "hidden" }}>
-            <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: "1rem" }}>{cards[idx].front}</p>
+          <div className="absolute inset-0 rounded flex items-center justify-center p-6 text-center border-2 cursor-pointer"
+            style={{ backfaceVisibility: "hidden", background: "#fff", borderColor: "#5b9aba", boxShadow: "3px 3px 0 #7ab2c8" }}>
+            <p className="font-semibold" style={{ fontSize: "1rem", color: "#1a3d52" }}>{cards[idx].front}</p>
           </div>
-          <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-primary to-indigo-700 shadow-lg flex items-center justify-center p-6 text-center" style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}>
-            <p className="text-white font-semibold text-sm leading-relaxed">{cards[idx].back}</p>
+          <div className="absolute inset-0 rounded flex items-center justify-center p-6 text-center border-2 cursor-pointer"
+            style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)", background: "#5b9aba", borderColor: "#3d7a98", boxShadow: "3px 3px 0 #3d7a98" }}>
+            <p className="font-semibold text-sm leading-relaxed" style={{ color: "#fff" }}>{cards[idx].back}</p>
           </div>
         </motion.div>
       </div>
       <div className="flex gap-3 mt-5 w-full max-w-sm">
-        <button onClick={() => goTo(idx - 1)} disabled={idx === 0} className="flex-1 py-3 rounded-2xl bg-white border-2 border-border text-muted-foreground font-semibold disabled:opacity-40">← Prev</button>
+        <button onClick={() => goTo(idx - 1)} disabled={idx === 0} className="retro-btn flex-1 py-2.5 disabled:opacity-40">← PREV</button>
         {idx === cards.length - 1
-          ? <button onClick={() => { onEarnCoins(40, "🃏 Flashcards complete!"); setDone(true); }} className="flex-1 py-3 rounded-2xl bg-green-500 text-white font-semibold">Done ✓</button>
-          : <button onClick={() => goTo(idx + 1)} className="flex-1 py-3 rounded-2xl bg-primary text-white font-semibold">Next →</button>
+          ? <button onClick={() => { onEarnCoins(40, "🃏 Flashcards complete!"); setDone(true); }} className="retro-btn flex-1 py-2.5" style={{ background: "#4ade80", color: "#fff", borderColor: "#22c55e" }}>DONE ✓</button>
+          : <button onClick={() => goTo(idx + 1)} className="retro-btn retro-btn-primary flex-1 py-2.5">NEXT →</button>
         }
       </div>
     </div>
@@ -534,58 +513,64 @@ function InlineMatch({ setId, customCards, setName, onBack, onEarnCoins }: {
   if (pairs.length < 2) return (
     <div className="flex-1 flex flex-col items-center justify-center p-8 text-center gap-4">
       <div className="text-4xl">😅</div>
-      <p className="font-bold" style={{ fontFamily: "'Outfit', sans-serif" }}>Need at least 2 cards for a match game.</p>
-      <button onClick={onBack} className="py-3 px-6 rounded-2xl bg-primary text-white font-bold">Go Back</button>
+      <p className="vt" style={{ fontSize: "1.1rem", color: "#1a3d52" }}>Need at least 2 cards for a match game.</p>
+      <button onClick={onBack} className="retro-btn retro-btn-primary py-2 px-6">GO BACK</button>
     </div>
   );
 
   if (done) return (
     <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
       <div className="text-5xl mb-3">🧩</div>
-      <h3 style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: "1.5rem" }}>Matched!</h3>
-      <p className="text-muted-foreground mt-1">All {pairs.length} pairs found</p>
-      <div className="text-2xl font-bold text-amber-500 mt-3">🪙 +50</div>
+      <p className="vt" style={{ fontSize: "1.8rem", color: "#1a3d52" }}>MATCHED!</p>
+      <p className="mt-1" style={{ color: "#5a7d8a" }}>All {pairs.length} pairs found</p>
+      <div className="vt mt-3" style={{ fontSize: "1.4rem", color: "#d97706" }}>🪙 +50</div>
       <div className="flex gap-3 mt-6 w-full max-w-xs">
-        <button onClick={onBack} className="flex-1 py-3 rounded-2xl bg-white border-2 border-border font-bold">Back</button>
+        <button onClick={onBack} className="retro-btn flex-1 py-2.5">BACK</button>
       </div>
     </div>
   );
 
   return (
-    <div className="flex-1 flex flex-col p-4">
-      <div className="flex items-center gap-3 mb-4">
-        <button onClick={onBack} className="w-9 h-9 rounded-xl bg-white border border-border flex items-center justify-center flex-shrink-0">
-          <X size={18} className="text-muted-foreground" />
+    <div className="flex-1 flex flex-col p-3">
+      <div className="flex items-center gap-3 mb-3">
+        <button onClick={onBack} className="retro-btn w-9 h-9 flex items-center justify-center p-0">
+          <X size={16} style={{ color: "#5a7d8a" }} />
         </button>
         <div>
-          <p className="text-sm font-bold" style={{ fontFamily: "'Outfit', sans-serif" }}>{setName} · Match</p>
-          <p className="text-xs text-muted-foreground">{matched.length}/{pairs.length} matched · +50 🪙</p>
+          <p className="font-bold text-sm" style={{ color: "#1a3d52" }}>{setName} · Match</p>
+          <p className="mono-label" style={{ fontSize: "0.6rem" }}>{matched.length}/{pairs.length} matched · +50 🪙</p>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-2 flex-1">
         <div className="space-y-2">
-          <p className="text-xs font-bold text-muted-foreground mb-2 text-center">TERM</p>
+          <p className="mono-label text-center mb-2" style={{ fontSize: "0.65rem" }}>TERM</p>
           {termOrder.map((pairIdx, i) => (
             <button key={i} onClick={() => handleSelect("terms", i)}
-              className={`w-full p-3 rounded-xl text-xs font-semibold text-left transition-all leading-snug ${isMatched(i) ? "bg-green-100 border-2 border-green-400 text-green-700 opacity-60"
-                : isWrong("terms", i) ? "bg-red-100 border-2 border-red-400 text-red-600"
-                : isSelected("terms", i) ? "bg-primary/10 border-2 border-primary text-primary"
-                : "bg-white border-2 border-border hover:border-primary"}`}>
+              className="retro-btn w-full p-2.5 text-xs text-left leading-snug"
+              style={{
+                background: isMatched(i) ? "#d1f0e0" : isWrong("terms", i) ? "#ffeaea" : isSelected("terms", i) ? "#ddeef6" : "#fff",
+                borderColor: isMatched(i) ? "#22c55e" : isWrong("terms", i) ? "#f87171" : isSelected("terms", i) ? "#5b9aba" : "#7ab2c8",
+                color: isMatched(i) ? "#166534" : isWrong("terms", i) ? "#b91c1c" : isSelected("terms", i) ? "#1a3d52" : "#2a5a70",
+                opacity: isMatched(i) ? 0.6 : 1,
+              }}>
               {pairs[pairIdx].term}
             </button>
           ))}
         </div>
         <div className="space-y-2">
-          <p className="text-xs font-bold text-muted-foreground mb-2 text-center">DEFINITION</p>
+          <p className="mono-label text-center mb-2" style={{ fontSize: "0.65rem" }}>DEFINITION</p>
           {defOrder.map((pairIdx, i) => {
             const matchedTermIdx = termOrder.findIndex(t => t === pairIdx);
             const matchedAlready = isMatched(matchedTermIdx);
             return (
               <button key={i} onClick={() => handleSelect("defs", i)}
-                className={`w-full p-3 rounded-xl text-xs font-semibold text-left transition-all leading-snug ${matchedAlready ? "bg-green-100 border-2 border-green-400 text-green-700 opacity-60"
-                  : isWrong("defs", i) ? "bg-red-100 border-2 border-red-400 text-red-600"
-                  : isSelected("defs", i) ? "bg-primary/10 border-2 border-primary text-primary"
-                  : "bg-white border-2 border-border hover:border-primary"}`}>
+                className="retro-btn w-full p-2.5 text-xs text-left leading-snug"
+                style={{
+                  background: matchedAlready ? "#d1f0e0" : isWrong("defs", i) ? "#ffeaea" : isSelected("defs", i) ? "#ddeef6" : "#fff",
+                  borderColor: matchedAlready ? "#22c55e" : isWrong("defs", i) ? "#f87171" : isSelected("defs", i) ? "#5b9aba" : "#7ab2c8",
+                  color: matchedAlready ? "#166534" : isWrong("defs", i) ? "#b91c1c" : isSelected("defs", i) ? "#1a3d52" : "#2a5a70",
+                  opacity: matchedAlready ? 0.6 : 1,
+                }}>
                 {pairs[pairIdx].def}
               </button>
             );
@@ -597,9 +582,7 @@ function InlineMatch({ setId, customCards, setName, onBack, onEarnCoins }: {
 }
 
 // ─── Main StudyMode ────────────────────────────────────────────────────────────
-interface Props {
-  onEarnCoins: (amount: number, reason: string) => void;
-}
+interface Props { onEarnCoins: (amount: number, reason: string) => void; }
 
 type StudyView = null | {
   type: "quiz" | "flashcards" | "match";
@@ -649,30 +632,19 @@ export function StudyMode({ onEarnCoins }: Props) {
   const switchMode = (m: "work" | "short" | "long") => { pause(); setMode(m); setTimeLeft(m === "work" ? POMODORO_WORK : m === "short" ? POMODORO_SHORT : POMODORO_LONG); };
   useEffect(() => () => { if (intervalRef.current) clearInterval(intervalRef.current); }, []);
 
-  const handleImport = (set: CustomStudySet) => {
-    setCustomSets(prev => [...prev, set]);
-  };
-
-  const handleDeleteCustom = (id: string) => {
-    setCustomSets(prev => prev.filter(s => s.id !== id));
-  };
+  const handleImport = (set: CustomStudySet) => setCustomSets(prev => [...prev, set]);
+  const handleDeleteCustom = (id: string) => setCustomSets(prev => prev.filter(s => s.id !== id));
 
   const allSetsForPicker = [...STUDY_SETS, ...customSets.map(s => ({ id: s.id as unknown as number, name: s.name, subject: s.subject, cards: s.cards.length, progress: s.progress, color: s.color, icon: s.icon }))];
 
   const tabs = [
-    { id: "sets", label: "Study Sets", icon: "📚" },
-    { id: "timer", label: "Pomodoro", icon: "🍅" },
-    { id: "notes", label: "Notes", icon: "📝" },
+    { id: "sets", label: "📚 SETS" },
+    { id: "timer", label: "🍅 TIMER" },
+    { id: "notes", label: "📝 NOTES" },
   ] as const;
 
   if (studyView) {
-    const props = {
-      setId: studyView.setId,
-      customCards: studyView.customCards,
-      setName: studyView.setName,
-      onBack: () => setStudyView(null),
-      onEarnCoins,
-    };
+    const props = { setId: studyView.setId, customCards: studyView.customCards, setName: studyView.setName, onBack: () => setStudyView(null), onEarnCoins };
     return (
       <div className="h-full flex flex-col">
         {studyView.type === "quiz" && <InlineQuiz {...props} />}
@@ -684,111 +656,105 @@ export function StudyMode({ onEarnCoins }: Props) {
 
   return (
     <div className="h-full flex flex-col">
-      {/* Page header */}
-      <div
-        className="relative px-5 pt-9 pb-5 overflow-hidden"
-        style={{ background: "linear-gradient(135deg, #1d4ed8 0%, #4338ca 50%, #7c3aed 100%)" }}
-      >
-        <div className="absolute -right-6 -top-6 w-32 h-32 rounded-full" style={{ background: "rgba(255,255,255,0.06)" }} />
-        <div className="absolute left-4 -bottom-4 w-16 h-16 rounded-full" style={{ background: "rgba(255,255,255,0.04)" }} />
-        <p className="text-white/60 text-xs font-bold tracking-widest mb-0.5">STUDY MODE</p>
-        <h1 className="text-white font-black text-2xl relative" style={{ fontFamily: "'Outfit', sans-serif" }}>Study Hub</h1>
-        <p className="text-white/65 text-sm mt-1 relative">Flashcards · Pomodoro · Notes</p>
+      {/* Header */}
+      <div className="os-window mx-3 mt-3 mb-2 flex-shrink-0">
+        <div className="os-titlebar">
+          <div className="os-btn-red" /><div className="os-btn-yellow" /><div className="os-btn-green" />
+          <span className="os-titlebar-title">STUDY.EXE</span>
+        </div>
+        <div style={{ background: "#ddeef6", padding: "6px 10px" }}>
+          <span className="vt" style={{ fontSize: "1.1rem", color: "#1a3d52" }}>📚 STUDY HUB — Flashcards · Pomodoro · Notes</span>
+        </div>
       </div>
 
-      {/* Tab nav */}
-      <div className="flex gap-1 p-3 pb-2 bg-white border-b" style={{ borderColor: "rgba(124,58,237,0.1)" }}>
+      {/* Tabs */}
+      <div className="flex gap-1 px-3 pb-2 flex-shrink-0">
         {tabs.map(tab => (
-          <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-            className={`flex-1 py-2 px-3 rounded-xl text-sm font-semibold transition-all ${activeTab === tab.id ? "text-white shadow-sm" : "text-muted-foreground"}`}
-            style={{
-              fontFamily: "'Outfit', sans-serif",
-              background: activeTab === tab.id ? "var(--primary)" : "transparent",
-            }}>
-            {tab.icon} {tab.label}
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className="retro-btn flex-1 py-1.5 text-center"
+            style={activeTab === tab.id ? { background: "#5b9aba", color: "#fff", borderColor: "#3d7a98", fontSize: "0.75rem" } : { fontSize: "0.75rem" }}
+          >
+            {tab.label}
           </button>
         ))}
       </div>
 
-      {/* ── Study Sets ──────────────────────────────────────────────────────── */}
+      {/* ── Study Sets ─────────────────────────────────────────────────────── */}
       {activeTab === "sets" && (
-        <div className="flex-1 overflow-y-auto p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: "1.2rem" }}>Study Sets</h2>
-            <button
-              onClick={() => setShowImport(true)}
-              className="flex items-center gap-1.5 bg-primary text-white text-xs font-bold px-3 py-2 rounded-xl shadow-sm hover:bg-primary/90 transition-colors"
-              style={{ fontFamily: "'Outfit', sans-serif" }}
-            >
-              <Upload size={13} />
-              Import
+        <div className="flex-1 overflow-y-auto px-3 pb-4 space-y-2">
+          <div className="flex items-center justify-between mb-1">
+            <span className="vt" style={{ fontSize: "1.1rem", color: "#1a3d52" }}>STUDY SETS</span>
+            <button onClick={() => setShowImport(true)} className="retro-btn retro-btn-primary text-xs py-1 px-2 flex items-center gap-1">
+              <Upload size={11} /> IMPORT
             </button>
           </div>
 
-          {/* Built-in sets */}
           {STUDY_SETS.map(set => (
-            <div key={set.id} className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden">
-              <div className={`h-1.5 bg-gradient-to-r ${set.color}`} style={{ width: `${set.progress}%` }} />
-              <div className="p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2.5">
-                    <span className="text-2xl">{set.icon}</span>
+            <div key={set.id} className="os-window">
+              <div className="os-titlebar py-1">
+                <div className="os-btn-green" />
+                <span className="os-titlebar-title" style={{ fontSize: "0.75rem" }}>{set.name.toUpperCase()} — {set.subject.toUpperCase()}</span>
+                <span className="vt ml-1" style={{ fontSize: "0.85rem", color: "#5b9aba" }}>{set.progress}%</span>
+              </div>
+              <div style={{ background: "#fff" }}>
+                {/* Progress bar */}
+                <div className="h-1.5" style={{ background: "#ddeef6" }}>
+                  <div className="h-full transition-all" style={{ width: `${set.progress}%`, background: "#5b9aba" }} />
+                </div>
+                <div className="p-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xl">{set.icon}</span>
                     <div>
-                      <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700 }}>{set.name}</p>
-                      <p className="text-xs text-muted-foreground">{set.subject} · {set.cards} cards</p>
+                      <p className="font-semibold text-sm" style={{ color: "#1a3d52" }}>{set.name}</p>
+                      <p className="text-xs" style={{ color: "#5a7d8a" }}>{set.subject} · {set.cards} cards</p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-bold text-primary">{set.progress}%</p>
-                    <p className="text-xs text-muted-foreground">mastered</p>
+                  <div className="flex gap-1.5">
+                    {(["Quiz", "Flashcards", "Match"] as const).map(m => (
+                      <button key={m}
+                        onClick={() => setStudyView({ type: m.toLowerCase() as "quiz" | "flashcards" | "match", setId: set.id, setName: set.name })}
+                        className="retro-btn flex-1 py-1 text-xs text-center">
+                        {m.toUpperCase()}
+                      </button>
+                    ))}
                   </div>
-                </div>
-                <div className="flex gap-2">
-                  {(["Quiz", "Flashcards", "Match"] as const).map(m => (
-                    <button key={m}
-                      onClick={() => setStudyView({ type: m.toLowerCase() as "quiz" | "flashcards" | "match", setId: set.id, setName: set.name })}
-                      className="flex-1 py-1.5 rounded-lg text-xs font-semibold bg-secondary text-secondary-foreground hover:bg-primary hover:text-white transition-colors">
-                      {m}
-                    </button>
-                  ))}
                 </div>
               </div>
             </div>
           ))}
 
-          {/* Custom imported sets */}
           {customSets.length > 0 && (
             <>
               <div className="flex items-center gap-2 pt-1">
-                <div className="flex-1 h-px bg-border" />
-                <span className="text-xs font-bold text-muted-foreground">MY IMPORTS</span>
-                <div className="flex-1 h-px bg-border" />
+                <div className="flex-1 h-px" style={{ background: "#b0d0e2" }} />
+                <span className="mono-label" style={{ fontSize: "0.65rem" }}>MY IMPORTS</span>
+                <div className="flex-1 h-px" style={{ background: "#b0d0e2" }} />
               </div>
               {customSets.map(set => (
-                <div key={set.id} className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden">
-                  <div className={`h-1.5 bg-gradient-to-r ${set.color}`} />
-                  <div className="p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2.5">
-                        <span className="text-2xl">{set.icon}</span>
-                        <div>
-                          <div className="flex items-center gap-1.5">
-                            <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700 }}>{set.name}</p>
-                            <span className="text-xs bg-primary/10 text-primary font-bold px-1.5 py-0.5 rounded-full">Imported</span>
-                          </div>
-                          <p className="text-xs text-muted-foreground">{set.subject} · {set.cards.length} cards</p>
-                        </div>
+                <div key={set.id} className="os-window">
+                  <div className="os-titlebar py-1">
+                    <div className="os-btn-yellow" />
+                    <span className="os-titlebar-title" style={{ fontSize: "0.75rem" }}>{set.name.toUpperCase()} [IMPORTED]</span>
+                    <button onClick={() => handleDeleteCustom(set.id)} className="ml-1 p-0.5 rounded" style={{ color: "#dc2626" }}>
+                      <Trash2 size={10} />
+                    </button>
+                  </div>
+                  <div className="p-3" style={{ background: "#fff" }}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-xl">{set.icon}</span>
+                      <div>
+                        <p className="font-semibold text-sm" style={{ color: "#1a3d52" }}>{set.name}</p>
+                        <p className="text-xs" style={{ color: "#5a7d8a" }}>{set.subject} · {set.cards.length} cards</p>
                       </div>
-                      <button onClick={() => handleDeleteCustom(set.id)} className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-red-500 hover:bg-red-50 transition-colors">
-                        <Trash2 size={14} />
-                      </button>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-1.5">
                       {(["Quiz", "Flashcards", "Match"] as const).map(m => (
                         <button key={m}
                           onClick={() => setStudyView({ type: m.toLowerCase() as "quiz" | "flashcards" | "match", setId: set.id, setName: set.name, customCards: set.cards })}
-                          className="flex-1 py-1.5 rounded-lg text-xs font-semibold bg-secondary text-secondary-foreground hover:bg-primary hover:text-white transition-colors">
-                          {m}
+                          className="retro-btn flex-1 py-1 text-xs text-center">
+                          {m.toUpperCase()}
                         </button>
                       ))}
                     </div>
@@ -798,86 +764,92 @@ export function StudyMode({ onEarnCoins }: Props) {
             </>
           )}
 
-          {/* Import CTA when no custom sets yet */}
           {customSets.length === 0 && (
-            <button
-              onClick={() => setShowImport(true)}
-              className="w-full py-4 rounded-2xl border-2 border-dashed border-border flex flex-col items-center gap-2 text-muted-foreground hover:border-primary hover:text-primary transition-colors"
-            >
-              <FileText size={20} />
-              <span className="text-sm font-semibold">Import your own study set</span>
-              <span className="text-xs opacity-70">Paste terms & definitions, or upload a file</span>
+            <button onClick={() => setShowImport(true)} className="retro-btn w-full py-4 flex flex-col items-center gap-2" style={{ borderStyle: "dashed" }}>
+              <FileText size={18} style={{ color: "#5b9aba" }} />
+              <span className="vt" style={{ fontSize: "0.9rem", color: "#1a3d52" }}>IMPORT YOUR OWN STUDY SET</span>
+              <span className="text-xs" style={{ color: "#8aaab8" }}>Paste terms & definitions, or upload a file</span>
             </button>
           )}
         </div>
       )}
 
-      {/* ── Pomodoro Timer ──────────────────────────────────────────────────── */}
+      {/* ── Pomodoro Timer ─────────────────────────────────────────────────── */}
       {activeTab === "timer" && (
-        <div className="flex-1 flex flex-col items-center p-6 overflow-y-auto">
-          <div className="flex gap-1 bg-white rounded-2xl p-1 border border-border shadow-sm mb-8 w-full">
-            {[{ id: "work", label: "Focus", duration: "25m" }, { id: "short", label: "Short Break", duration: "5m" }, { id: "long", label: "Long Break", duration: "15m" }].map(m => (
+        <div className="flex-1 flex flex-col items-center px-3 pb-4 overflow-y-auto">
+          <div className="flex gap-1 w-full mb-6 mt-1">
+            {[{ id: "work", label: "FOCUS", duration: "25m" }, { id: "short", label: "SHORT BRK", duration: "5m" }, { id: "long", label: "LONG BRK", duration: "15m" }].map(m => (
               <button key={m.id} onClick={() => switchMode(m.id as typeof mode)}
-                className={`flex-1 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${mode === m.id ? "bg-primary text-white shadow-sm" : "text-muted-foreground"}`}
-                style={{ fontFamily: "'Outfit', sans-serif" }}>
+                className="retro-btn flex-1 py-1.5 text-center"
+                style={mode === m.id ? { background: "#5b9aba", color: "#fff", borderColor: "#3d7a98", fontSize: "0.7rem" } : { fontSize: "0.7rem" }}>
                 {m.label}
               </button>
             ))}
           </div>
 
-          <div className="relative w-52 h-52 mb-8">
+          <div className="relative w-52 h-52 mb-6">
             <svg className="w-full h-full -rotate-90" viewBox="0 0 200 200">
-              <circle cx="100" cy="100" r="90" fill="none" stroke="var(--muted)" strokeWidth="12" />
-              <circle cx="100" cy="100" r="90" fill="none" stroke={mode === "work" ? "var(--primary)" : "#10b981"} strokeWidth="12" strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={strokeDashoffset} style={{ transition: "stroke-dashoffset 1s linear" }} />
+              <circle cx="100" cy="100" r="90" fill="none" stroke="#ddeef6" strokeWidth="12" />
+              <circle cx="100" cy="100" r="90" fill="none" stroke={mode === "work" ? "#5b9aba" : "#4ade80"} strokeWidth="12" strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={strokeDashoffset} style={{ transition: "stroke-dashoffset 1s linear" }} />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <div style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: "3rem", lineHeight: 1 }}>
+              <div className="vt" style={{ fontSize: "3rem", lineHeight: 1, color: "#1a3d52" }}>
                 {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
               </div>
-              <div className="text-muted-foreground text-sm mt-2">{mode === "work" ? "Focus time" : "Break time"}</div>
+              <div className="mono-label mt-2" style={{ fontSize: "0.65rem" }}>{mode === "work" ? "FOCUS TIME" : "BREAK TIME"}</div>
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            <button onClick={reset} className="w-12 h-12 rounded-full bg-white border-2 border-border flex items-center justify-center shadow-sm">
-              <RotateCcw size={20} className="text-muted-foreground" />
+          <div className="flex items-center gap-4 mb-4">
+            <button onClick={reset} className="retro-btn w-12 h-12 flex items-center justify-center p-0">
+              <RotateCcw size={18} style={{ color: "#5a7d8a" }} />
             </button>
-            <button onClick={isRunning ? pause : start} className="w-20 h-20 rounded-full bg-primary flex items-center justify-center shadow-lg">
-              {isRunning ? <Pause size={32} className="text-white" /> : <Play size={32} className="text-white ml-1" />}
+            <button onClick={isRunning ? pause : start} className="w-20 h-20 rounded-full flex items-center justify-center border-4" style={{ background: "#5b9aba", borderColor: "#3d7a98", boxShadow: "3px 3px 0 #3d7a98" }}>
+              {isRunning ? <Pause size={28} color="#fff" /> : <Play size={28} color="#fff" className="ml-1" />}
             </button>
-            <div className="w-12 h-12 rounded-full bg-white border-2 border-border flex items-center justify-center shadow-sm">
-              <span className="font-bold text-sm text-muted-foreground">{sessions}</span>
+            <div className="retro-btn w-12 h-12 flex items-center justify-center p-0">
+              <span className="vt" style={{ fontSize: "1.1rem", color: "#1a3d52" }}>{sessions}</span>
             </div>
           </div>
-          <p className="text-muted-foreground text-sm mt-4">{sessions} sessions · <span className="text-amber-500 font-bold">🪙 50</span> per session</p>
+          <p className="mono-label mb-4" style={{ fontSize: "0.65rem" }}>
+            {sessions} SESSIONS · <span style={{ color: "#d97706" }}>🪙 50 PER SESSION</span>
+          </p>
 
-          <div className="w-full mt-6 bg-white rounded-2xl border border-border p-4 shadow-sm">
-            <p className="text-xs text-muted-foreground mb-2 font-semibold">STUDYING</p>
-            <div className="flex items-center justify-between">
+          <div className="os-window w-full">
+            <div className="os-titlebar py-1">
+              <div className="os-btn-green" />
+              <span className="os-titlebar-title" style={{ fontSize: "0.7rem" }}>STUDYING</span>
+            </div>
+            <div className="flex items-center justify-between p-3" style={{ background: "#fff" }}>
               <div className="flex items-center gap-2">
                 <span className="text-xl">{linkedSet.icon}</span>
-                <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700 }}>{linkedSet.name}</span>
+                <span className="font-semibold text-sm" style={{ color: "#1a3d52" }}>{linkedSet.name}</span>
               </div>
-              <button onClick={() => setShowSetPicker(true)} className="text-primary text-sm font-semibold flex items-center gap-1">
-                Change <ChevronRight size={14} />
+              <button onClick={() => setShowSetPicker(true)} className="retro-btn text-xs py-1 px-2 flex items-center gap-1">
+                CHANGE <ChevronRight size={12} />
               </button>
             </div>
           </div>
 
           {showSetPicker && (
-            <div className="fixed inset-0 z-50 bg-black/60 flex items-end" onClick={() => setShowSetPicker(false)}>
-              <div className="bg-white w-full rounded-t-3xl p-5 pb-10" onClick={e => e.stopPropagation()}>
-                <h3 style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: "1.1rem", marginBottom: "1rem" }}>Choose Study Set</h3>
-                <div className="space-y-2 max-h-72 overflow-y-auto">
+            <div className="fixed inset-0 z-50 flex items-end" style={{ background: "rgba(0,0,0,0.6)" }} onClick={() => setShowSetPicker(false)}>
+              <div className="os-window w-full" style={{ borderRadius: "8px 8px 0 0" }} onClick={e => e.stopPropagation()}>
+                <div className="os-titlebar">
+                  <div className="os-btn-red" onClick={() => setShowSetPicker(false)} style={{ cursor: "pointer" }} />
+                  <div className="os-btn-yellow" /><div className="os-btn-green" />
+                  <span className="os-titlebar-title">CHOOSE STUDY SET</span>
+                </div>
+                <div className="p-4 pb-10 space-y-2 max-h-72 overflow-y-auto" style={{ background: "#f0f8fc" }}>
                   {allSetsForPicker.map(s => (
                     <button key={String(s.id)} onClick={() => { setLinkedSet(s as typeof linkedSet); setShowSetPicker(false); }}
-                      className={`w-full flex items-center gap-3 p-3 rounded-2xl border-2 transition-all ${linkedSet.id === s.id ? "border-primary bg-primary/5" : "border-border bg-white"}`}>
-                      <span className="text-2xl">{s.icon}</span>
+                      className="retro-btn w-full flex items-center gap-3 p-2.5 text-left"
+                      style={linkedSet.id === s.id ? { background: "#ddeef6", borderColor: "#5b9aba" } : {}}>
+                      <span className="text-xl">{s.icon}</span>
                       <div className="text-left flex-1">
-                        <p className="font-bold text-sm" style={{ fontFamily: "'Outfit', sans-serif" }}>{s.name}</p>
-                        <p className="text-xs text-muted-foreground">{s.subject} · {s.cards} cards</p>
+                        <p className="font-bold text-sm" style={{ color: "#1a3d52" }}>{s.name}</p>
+                        <p className="text-xs" style={{ color: "#5a7d8a" }}>{s.subject}</p>
                       </div>
-                      {linkedSet.id === s.id && <Star size={16} className="fill-primary text-primary" />}
+                      {linkedSet.id === s.id && <Star size={14} style={{ color: "#5b9aba", fill: "#5b9aba" }} />}
                     </button>
                   ))}
                 </div>
@@ -887,30 +859,28 @@ export function StudyMode({ onEarnCoins }: Props) {
         </div>
       )}
 
-      {/* ── Notes ───────────────────────────────────────────────────────────── */}
+      {/* ── Notes ──────────────────────────────────────────────────────────── */}
       {activeTab === "notes" && (
-        <div className="flex-1 flex flex-col p-4 gap-3">
+        <div className="flex-1 flex flex-col px-3 pb-4 gap-2">
           <div className="flex items-center justify-between">
-            <h2 style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: "1.2rem" }}>Notes</h2>
-            <button onClick={() => onEarnCoins(10, "Notes saved! 📝")}
-              className="text-xs text-primary font-semibold bg-secondary px-3 py-1.5 rounded-xl border border-border">
-              Save (+10 🪙)
+            <span className="vt" style={{ fontSize: "1.1rem", color: "#1a3d52" }}>NOTES</span>
+            <button onClick={() => onEarnCoins(10, "Notes saved! 📝")} className="retro-btn retro-btn-primary text-xs py-1 px-2">
+              SAVE (+10 🪙)
             </button>
           </div>
           <textarea
-            className="flex-1 bg-white border border-border rounded-2xl p-4 text-sm outline-none resize-none shadow-sm focus:border-primary transition-colors"
+            className="flex-1 border-2 rounded p-3 text-sm outline-none resize-none"
+            style={{ borderColor: "#7ab2c8", background: "#fff", color: "#1a3d52", lineHeight: 1.7, fontFamily: "monospace" }}
             placeholder="Start taking notes..."
             value={noteText}
             onChange={e => setNoteText(e.target.value)}
-            style={{ fontFamily: "'Nunito', sans-serif", lineHeight: 1.7 }}
           />
-          <p className="text-xs text-muted-foreground text-center">
-            {noteText.trim().split(/\s+/).filter(Boolean).length} words
+          <p className="mono-label text-center" style={{ fontSize: "0.6rem" }}>
+            {noteText.trim().split(/\s+/).filter(Boolean).length} WORDS
           </p>
         </div>
       )}
 
-      {/* Import modal */}
       <AnimatePresence>
         {showImport && <ImportModal onClose={() => setShowImport(false)} onImport={handleImport} />}
       </AnimatePresence>

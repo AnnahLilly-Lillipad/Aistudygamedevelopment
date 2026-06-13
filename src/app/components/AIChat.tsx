@@ -67,54 +67,67 @@ export function AIChat() {
     "Tell me about your faction",
   ];
 
-  // Show a mix of canon + AU chars in the picker
   const pickerChars = CHARACTERS.slice(0, 30);
 
   return (
     <div className="h-full flex flex-col">
-      {/* Header */}
-      <div className={`p-4 bg-gradient-to-r ${selectedChar.gradient} text-white`}>
-        <button onClick={() => setShowPicker(!showPicker)} className="flex items-center gap-3 w-full">
-          <div className="w-14 h-20 rounded-xl overflow-hidden flex-shrink-0 border-2 border-white/40">
-            <CardImage character={selectedChar} size="xs" showName={false} className="w-full h-full" />
-          </div>
-          <div className="flex-1 text-left">
-            <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: "1rem" }}>{selectedChar.characterName}</p>
-            {selectedChar.variant && <p className="text-white/80 text-xs">{selectedChar.variant}</p>}
-            <p className="text-white/70 text-xs">{selectedChar.ability} · {selectedChar.rarity}</p>
-            {selectedChar.au && <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full">{selectedChar.au}</span>}
-          </div>
-          <ChevronDown size={20} className={`transition-transform ${showPicker ? "rotate-180" : ""}`} />
-        </button>
-
-        {showPicker && (
-          <div className="mt-3 bg-white/10 rounded-2xl p-2 max-h-36 overflow-y-auto">
-            <div className="grid grid-cols-6 gap-1.5">
-              {pickerChars.map(char => (
-                <button
-                  key={char.id}
-                  onClick={() => selectChar(char)}
-                  className={`rounded-xl overflow-hidden border-2 transition-all ${selectedChar.id === char.id ? "border-white" : "border-transparent"}`}
-                >
-                  <CardImage character={char} size="xs" showName={false} />
-                  <p className="text-white text-center py-0.5" style={{ fontSize: "0.4rem", fontWeight: 700 }}>{char.displayName}</p>
-                </button>
-              ))}
+      {/* Header — retro OS window style */}
+      <div className="os-window mx-3 mt-3 mb-2 flex-shrink-0">
+        <div className="os-titlebar">
+          <div className="os-btn-red" /><div className="os-btn-yellow" /><div className="os-btn-green" />
+          <span className="os-titlebar-title">CHAT.EXE</span>
+        </div>
+        <div style={{ background: "#ddeef6", padding: "10px 12px" }}>
+          <button onClick={() => setShowPicker(!showPicker)} className="flex items-center gap-3 w-full">
+            <div className="w-14 h-20 rounded overflow-hidden flex-shrink-0 border-2" style={{ borderColor: "#7ab2c8" }}>
+              <CardImage character={selectedChar} size="xs" showName={false} className="w-full h-full" />
             </div>
-          </div>
-        )}
+            <div className="flex-1 text-left">
+              <p className="vt" style={{ fontSize: "1.1rem", color: "#1a3d52", letterSpacing: "0.05em" }}>{selectedChar.characterName}</p>
+              {selectedChar.variant && <p className="text-xs" style={{ color: "#5a7d8a" }}>{selectedChar.variant}</p>}
+              <p className="text-xs" style={{ color: "#5a7d8a" }}>{selectedChar.ability} · {selectedChar.rarity}</p>
+              {selectedChar.au && <span className="text-xs px-2 py-0.5 rounded" style={{ background: "#b0d0e2", color: "#1a3d52" }}>{selectedChar.au}</span>}
+            </div>
+            <ChevronDown size={18} style={{ color: "#5b9aba", flexShrink: 0, transform: showPicker ? "rotate(180deg)" : undefined, transition: "transform 0.2s" }} />
+          </button>
 
-        <div className="flex gap-2 mt-3">
-          {[{ id: "chat", label: "Chat" }, { id: "study", label: "Study Assistant" }].map(m => (
-            <button key={m.id} onClick={() => setMode(m.id as typeof mode)} className={`px-4 py-1.5 rounded-xl text-sm font-semibold ${mode === m.id ? "bg-white text-foreground" : "bg-white/20 text-white"}`}>{m.label}</button>
-          ))}
+          {showPicker && (
+            <div className="mt-2 rounded border-2 p-2 max-h-36 overflow-y-auto" style={{ borderColor: "#7ab2c8", background: "#f0f8fc" }}>
+              <div className="grid grid-cols-6 gap-1.5">
+                {pickerChars.map(char => (
+                  <button
+                    key={char.id}
+                    onClick={() => selectChar(char)}
+                    className="rounded overflow-hidden border-2 transition-all"
+                    style={{ borderColor: selectedChar.id === char.id ? "#5b9aba" : "transparent" }}
+                  >
+                    <CardImage character={char} size="xs" showName={false} />
+                    <p className="vt text-center py-0.5" style={{ fontSize: "0.55rem", color: "#1a3d52" }}>{char.displayName}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="flex gap-2 mt-2">
+            {[{ id: "chat", label: "CHAT" }, { id: "study", label: "STUDY" }].map(m => (
+              <button
+                key={m.id}
+                onClick={() => setMode(m.id as typeof mode)}
+                className="retro-btn flex-1 text-center"
+                style={mode === m.id ? { background: "#5b9aba", color: "#fff", borderColor: "#3d7a98", boxShadow: "none", transform: "none" } : {}}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
       {mode === "study" && (
-        <div className="flex gap-2 overflow-x-auto p-3 bg-secondary border-b border-border">
+        <div className="flex gap-2 overflow-x-auto px-3 py-2 no-scrollbar flex-shrink-0" style={{ background: "#f0f8fc", borderBottom: "2px solid #7ab2c8" }}>
           {STUDY_PROMPTS.map((p, i) => (
-            <button key={i} onClick={() => setInput(p)} className="flex-shrink-0 bg-white border border-border rounded-xl px-3 py-2 text-xs font-semibold text-muted-foreground hover:bg-primary hover:text-white transition-colors">
+            <button key={i} onClick={() => setInput(p)} className="retro-btn flex-shrink-0 text-xs whitespace-nowrap">
               {p}
             </button>
           ))}
@@ -122,17 +135,23 @@ export function AIChat() {
       )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3" style={{ background: "#f0f8fc" }}>
         {messages.map(msg => (
           <div key={msg.id} className={`flex gap-2 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
             {msg.role === "char" && (
-              <div className="w-8 h-10 rounded-xl overflow-hidden flex-shrink-0">
+              <div className="w-8 h-10 rounded overflow-hidden flex-shrink-0 border" style={{ borderColor: "#7ab2c8" }}>
                 <CardImage character={selectedChar} size="xs" showName={false} className="w-full h-full" />
               </div>
             )}
-            <div className={`max-w-[75%] rounded-2xl px-4 py-3 ${msg.role === "user" ? "bg-primary text-white rounded-tr-sm" : "bg-white border border-border text-foreground rounded-tl-sm shadow-sm"}`}>
+            <div
+              className="max-w-[75%] rounded px-3 py-2 border-2"
+              style={msg.role === "user"
+                ? { background: "#5b9aba", borderColor: "#3d7a98", color: "#fff", borderRadius: "4px 4px 4px 12px" }
+                : { background: "#fff", borderColor: "#7ab2c8", color: "#1a3d52", borderRadius: "4px 12px 12px 4px", boxShadow: "2px 2px 0 #cde5f0" }
+              }
+            >
               <p className="text-sm" style={{ lineHeight: 1.5 }}>{msg.text}</p>
-              <p className={`text-xs mt-1 ${msg.role === "user" ? "text-white/60" : "text-muted-foreground"}`}>
+              <p className="text-xs mt-1" style={{ color: msg.role === "user" ? "rgba(255,255,255,0.6)" : "#8aaab8" }}>
                 {msg.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
               </p>
             </div>
@@ -140,12 +159,14 @@ export function AIChat() {
         ))}
         {isTyping && (
           <div className="flex gap-2">
-            <div className="w-8 h-10 rounded-xl overflow-hidden flex-shrink-0">
+            <div className="w-8 h-10 rounded overflow-hidden flex-shrink-0 border" style={{ borderColor: "#7ab2c8" }}>
               <CardImage character={selectedChar} size="xs" showName={false} className="w-full h-full" />
             </div>
-            <div className="bg-white border border-border rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm">
+            <div className="border-2 rounded px-4 py-3" style={{ background: "#fff", borderColor: "#7ab2c8" }}>
               <div className="flex gap-1">
-                {[0, 1, 2].map(i => <div key={i} className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />)}
+                {[0, 1, 2].map(i => (
+                  <div key={i} className="w-2 h-2 rounded-full animate-bounce" style={{ background: "#5b9aba", animationDelay: `${i * 0.15}s` }} />
+                ))}
               </div>
             </div>
           </div>
@@ -154,21 +175,26 @@ export function AIChat() {
       </div>
 
       {/* Input */}
-      <div className="p-4 bg-white border-t border-border">
-        <div className="flex items-center gap-2 bg-secondary rounded-2xl px-4 py-2">
+      <div className="flex-shrink-0 p-3 border-t-2" style={{ background: "#fff", borderColor: "#7ab2c8" }}>
+        <div className="flex items-center gap-2 border-2 rounded px-3 py-2" style={{ borderColor: "#7ab2c8", background: "#f0f8fc" }}>
           <input
-            className="flex-1 bg-transparent outline-none text-sm"
+            className="flex-1 bg-transparent outline-none text-sm vt"
+            style={{ color: "#1a3d52", fontSize: "1rem" }}
             placeholder={`Message ${selectedChar.displayName}…`}
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === "Enter" && sendMessage()}
-            style={{ color: "var(--foreground)" }}
           />
-          <button onClick={sendMessage} disabled={!input.trim() || isTyping} className="w-8 h-8 bg-primary rounded-xl flex items-center justify-center disabled:opacity-40">
-            <Send size={14} className="text-white" />
+          <button
+            onClick={sendMessage}
+            disabled={!input.trim() || isTyping}
+            className="w-8 h-8 flex items-center justify-center rounded border-2 transition-opacity"
+            style={{ background: "#5b9aba", borderColor: "#3d7a98", opacity: (!input.trim() || isTyping) ? 0.4 : 1 }}
+          >
+            <Send size={14} color="#fff" />
           </button>
         </div>
-        <p className="text-center text-xs text-muted-foreground mt-2">AI responses are fictional. For entertainment only.</p>
+        <p className="text-center text-xs mt-1.5 vt" style={{ color: "#8aaab8", fontSize: "0.8rem" }}>AI responses are fictional. Entertainment only.</p>
       </div>
     </div>
   );

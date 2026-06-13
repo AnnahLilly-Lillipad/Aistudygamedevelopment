@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { X, Star, Sparkles, Coins, Clock, ChevronRight, ChevronLeft } from "lucide-react";
+import { X, Star, Sparkles, Coins, Clock, ChevronRight } from "lucide-react";
 import { CHARACTERS, BANNERS, type Character, type Rarity, type OwnedCard } from "../data/characters";
 import { CardImage } from "./CardImage";
 
@@ -68,18 +68,16 @@ function CardReveal({ char, index, revealed, onClick, size = "sm" }: CardRevealP
       >
         {/* Front */}
         <div
-          className={`rounded-2xl border-2 ${style.border} overflow-hidden cursor-pointer ${char.rarity === "UR" ? "shadow-rose-400 shadow-xl" : char.rarity === "SSR" ? "shadow-amber-300 shadow-lg" : char.rarity === "SR" ? "shadow-purple-300 shadow-md" : ""}`}
+          className={`rounded border-2 ${style.border} overflow-hidden cursor-pointer ${char.rarity === "UR" ? "shadow-rose-400 shadow-xl" : char.rarity === "SSR" ? "shadow-amber-300 shadow-lg" : char.rarity === "SR" ? "shadow-purple-300 shadow-md" : ""}`}
           style={{ backfaceVisibility: "hidden" }}
         >
           <div className="relative">
             <CardImage character={char} size={size} showName={false} />
-            {/* Stars — bottom-right */}
             <div className="absolute bottom-1.5 right-1.5 flex gap-0.5">
               {Array.from({ length: style.stars }).map((_, i) => (
                 <Star key={i} size={starSize} className="fill-amber-400 text-amber-400 drop-shadow" />
               ))}
             </div>
-            {/* Rarity glow for high rarity */}
             {(char.rarity === "UR" || char.rarity === "SSR") && (
               <div className="absolute inset-0 pointer-events-none" style={{
                 background: char.rarity === "UR"
@@ -89,14 +87,14 @@ function CardReveal({ char, index, revealed, onClick, size = "sm" }: CardRevealP
             )}
           </div>
         </div>
-        {/* Back */}
+        {/* Back — retro blue */}
         <div
-          className="absolute inset-0 rounded-2xl border-2 border-primary bg-gradient-to-b from-primary to-indigo-800 flex items-center justify-center cursor-pointer"
-          style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
+          className="absolute inset-0 rounded border-2 flex items-center justify-center cursor-pointer"
+          style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)", background: "#5b9aba", borderColor: "#3d7a98" }}
         >
           <div className="text-center flex flex-col items-center gap-1">
-            <Sparkles size={size === "lg" ? 32 : 22} className="text-white/80" />
-            <p className="text-white/70" style={{ fontSize: size === "lg" ? "0.75rem" : "0.52rem" }}>Tap to reveal</p>
+            <Sparkles size={size === "lg" ? 32 : 22} style={{ color: "rgba(255,255,255,0.8)" }} />
+            <p className="vt" style={{ color: "rgba(255,255,255,0.7)", fontSize: size === "lg" ? "0.75rem" : "0.55rem" }}>TAP TO REVEAL</p>
           </div>
         </div>
       </motion.div>
@@ -118,7 +116,6 @@ export function GachaScreen({ coins, ownedCards, onSpend, onGain, pityCount, set
   const [revealed, setRevealed] = useState<boolean[]>([]);
   const [showResults, setShowResults] = useState(false);
 
-  // ── Determine currently active limited banner by date ──────────────────────
   const today = new Date();
   const activeLimited = BANNERS.find(b => {
     if (!b.limited || !b.startDate) return false;
@@ -165,7 +162,6 @@ export function GachaScreen({ coins, ownedCards, onSpend, onGain, pityCount, set
   const revealOne = (i: number) => setRevealed(prev => { const n = [...prev]; n[i] = true; return n; });
   const close = () => { setShowResults(false); setPulledCards([]); };
 
-  // Upcoming limited banner info
   const nextLimited = BANNERS.find(b => {
     if (!b.limited || !b.startDate) return false;
     return new Date(b.startDate) > today;
@@ -173,46 +169,53 @@ export function GachaScreen({ coins, ownedCards, onSpend, onGain, pityCount, set
 
   return (
     <div className="h-full flex flex-col">
+      {/* Page header */}
+      <div className="os-window mx-3 mt-3 mb-2 flex-shrink-0">
+        <div className="os-titlebar">
+          <div className="os-btn-red" /><div className="os-btn-yellow" /><div className="os-btn-green" />
+          <span className="os-titlebar-title">GACHA.EXE</span>
+        </div>
+        <div style={{ background: "#ddeef6", padding: "8px 10px" }}>
+          <span className="vt" style={{ fontSize: "1.1rem", color: "#1a3d52" }}>✦ WISH MACHINE ✦</span>
+        </div>
+      </div>
+
       {/* Banner tabs */}
-      <div className="flex gap-2 overflow-x-auto p-4 pb-2 no-scrollbar">
+      <div className="flex gap-2 overflow-x-auto px-3 pb-2 no-scrollbar flex-shrink-0">
         {visibleBanners.map((b, i) => (
           <button
             key={b.id}
             onClick={() => setSelectedBannerIdx(i)}
-            className={`flex-shrink-0 rounded-2xl px-4 py-2 text-sm font-semibold transition-all ${selectedBannerIdx === i ? "bg-primary text-white shadow-md scale-105" : "bg-white text-muted-foreground border border-border"}`}
-            style={{ fontFamily: "'Outfit', sans-serif" }}
+            className="retro-btn flex-shrink-0 text-sm"
+            style={selectedBannerIdx === i ? { background: "#5b9aba", color: "#fff", borderColor: "#3d7a98" } : {}}
           >
             {b.emoji} {b.name.split(" ")[0]}
           </button>
         ))}
       </div>
 
-      {/* Banner hero */}
-      <div className={`mx-4 rounded-3xl bg-gradient-to-br ${banner.gradient} p-5 text-white relative overflow-hidden shadow-lg`}>
-        <div className="absolute top-3 right-4 opacity-10 select-none">
-          <Sparkles size={72} className="text-white" />
+      {/* Banner hero — retro window */}
+      <div className="os-window mx-3 mb-2 flex-shrink-0">
+        <div className="os-titlebar">
+          <div className="os-btn-green" />
+          {banner.limited && <span className="retro-btn py-0 px-1.5 text-xs" style={{ background: "#ff6b6b", color: "#fff", borderColor: "#e05555", boxShadow: "none" }}>LIMITED</span>}
+          <span className="os-titlebar-title">{banner.name.toUpperCase()}</span>
         </div>
-        <div className="relative z-10">
-          <div className="flex items-center gap-2 mb-1">
-            {banner.limited && <span className="bg-rose-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">LIMITED</span>}
-            <span className="text-white/70 text-xs">{banner.subtitle}</span>
-          </div>
-          <h2 style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: "1.3rem" }}>{banner.name}</h2>
-          <p className="text-white/80 text-sm mt-1">{banner.description}</p>
+        <div style={{ background: "#f0f8fc", padding: "12px" }}>
+          <p className="text-xs mb-0.5" style={{ color: "#5a7d8a" }}>{banner.subtitle}</p>
+          <p className="text-sm mb-2" style={{ color: "#2a5a70" }}>{banner.description}</p>
           {banner.endDate && (
-            <div className="flex items-center gap-1 text-white/60 text-xs mt-2">
+            <div className="flex items-center gap-1 text-xs mb-3" style={{ color: "#8aaab8" }}>
               <Clock size={11} />
               <span>Ends {banner.endDate}</span>
             </div>
           )}
-
-          {/* Featured cards */}
-          <div className="flex gap-2 mt-4 overflow-x-auto pb-1">
+          <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
             {banner.featured.map(id => {
               const char = CHARACTERS.find(c => c.id === id);
               if (!char) return null;
               return (
-                <div key={id} className="flex-shrink-0 w-14 border-2 border-white/40 rounded-xl overflow-hidden">
+                <div key={id} className="flex-shrink-0 w-14 rounded overflow-hidden border-2" style={{ borderColor: "#7ab2c8" }}>
                   <CardImage character={char} size="xs" showName />
                 </div>
               );
@@ -222,62 +225,71 @@ export function GachaScreen({ coins, ownedCards, onSpend, onGain, pityCount, set
       </div>
 
       {/* Rates + pity */}
-      <div className="mx-4 mt-3 bg-white rounded-2xl p-3 border border-border flex items-center justify-between shadow-sm">
-        <div className="flex gap-4">
-          {(Object.entries(banner.rates) as [Rarity, number][]).map(([r, rate]) => (
-            <div key={r} className="text-center">
-              <div className={`text-xs font-bold ${r === "UR" ? "text-rose-500" : r === "SSR" ? "text-amber-500" : r === "SR" ? "text-purple-500" : "text-slate-400"}`}>{r}</div>
-              <div className="text-xs text-muted-foreground">{rate}%</div>
-            </div>
-          ))}
+      <div className="os-window mx-3 mb-2 flex-shrink-0">
+        <div className="os-titlebar">
+          <div className="os-btn-green" />
+          <span className="os-titlebar-title">RATES & PITY</span>
         </div>
-        <div className="text-right">
-          <div className="text-xs text-muted-foreground">Pity</div>
-          <div className="text-sm font-bold text-primary">{pityCount}/100</div>
+        <div className="flex items-center justify-between px-4 py-2" style={{ background: "#fff" }}>
+          <div className="flex gap-4">
+            {(Object.entries(banner.rates) as [Rarity, number][]).map(([r, rate]) => (
+              <div key={r} className="text-center">
+                <div className="vt" style={{ fontSize: "0.9rem", color: r === "UR" ? "#dc2626" : r === "SSR" ? "#d97706" : r === "SR" ? "#7c3aed" : "#64748b" }}>{r}</div>
+                <div className="text-xs" style={{ color: "#5a7d8a" }}>{rate}%</div>
+              </div>
+            ))}
+          </div>
+          <div className="text-right">
+            <div className="mono-label" style={{ fontSize: "0.7rem" }}>PITY</div>
+            <div className="vt" style={{ fontSize: "1.2rem", color: "#5b9aba" }}>{pityCount}/100</div>
+          </div>
         </div>
       </div>
 
       {/* Pull buttons */}
-      <div className="px-4 mt-4 flex gap-3">
+      <div className="px-3 flex gap-3 mb-2 flex-shrink-0">
         <button
           disabled={coins < PULL_COST.single}
           onClick={() => doPull(1)}
-          className="flex-1 bg-white border-2 border-primary text-primary rounded-2xl py-4 font-bold disabled:opacity-50 active:scale-95 transition-transform"
-          style={{ fontFamily: "'Outfit', sans-serif" }}
+          className="retro-btn flex-1 py-3 disabled:opacity-50"
         >
-          <div>Single Pull</div>
-          <div className="flex items-center justify-center gap-1 text-sm text-amber-500 mt-0.5">
-            <Coins size={13} /> {PULL_COST.single.toLocaleString()}
+          <div className="vt" style={{ fontSize: "1rem" }}>SINGLE PULL</div>
+          <div className="flex items-center justify-center gap-1 text-xs mt-0.5" style={{ color: "#d97706" }}>
+            <Coins size={11} /> {PULL_COST.single.toLocaleString()}
           </div>
         </button>
         <button
           disabled={coins < PULL_COST.ten}
           onClick={() => doPull(10)}
-          className="flex-1 bg-primary text-white rounded-2xl py-4 font-bold disabled:opacity-50 active:scale-95 transition-transform shadow-md"
-          style={{ fontFamily: "'Outfit', sans-serif" }}
+          className="retro-btn retro-btn-primary flex-1 py-3 disabled:opacity-50"
         >
-          <div>10 Pull</div>
-          <div className="flex items-center justify-center gap-1 text-sm text-amber-300 mt-0.5">
-            <Coins size={13} /> {PULL_COST.ten.toLocaleString()}
+          <div className="vt" style={{ fontSize: "1rem" }}>10 PULL</div>
+          <div className="flex items-center justify-center gap-1 text-xs mt-0.5" style={{ color: "#ffd166" }}>
+            <Coins size={11} /> {PULL_COST.ten.toLocaleString()}
           </div>
         </button>
       </div>
-      <div className="mt-2 text-center text-xs text-muted-foreground flex items-center justify-center gap-1">
-        <Coins size={12} className="text-amber-500" />
-        <span className="font-bold text-amber-500">{coins.toLocaleString()}</span>
-        <span>coins available</span>
+      <div className="text-center text-xs flex items-center justify-center gap-1 mb-2 flex-shrink-0">
+        <Coins size={12} style={{ color: "#d97706" }} />
+        <span className="vt" style={{ color: "#d97706", fontSize: "1rem" }}>{coins.toLocaleString()}</span>
+        <span style={{ color: "#5a7d8a" }}>coins available</span>
       </div>
 
-      {/* Upcoming banner teaser */}
+      {/* Upcoming banner */}
       {nextLimited && (
-        <div className="mx-4 mt-3 rounded-2xl border border-border bg-white p-3 flex items-center gap-3">
-          <div className="text-2xl">{nextLimited.emoji}</div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs text-muted-foreground font-semibold">Up Next</p>
-            <p className="text-sm font-bold text-foreground truncate">{nextLimited.name}</p>
-            <p className="text-xs text-muted-foreground">Starts {nextLimited.startDate}</p>
+        <div className="os-window mx-3 mb-2 flex-shrink-0">
+          <div className="os-titlebar">
+            <div className="os-btn-yellow" />
+            <span className="os-titlebar-title">UP NEXT</span>
           </div>
-          <ChevronRight size={16} className="text-muted-foreground flex-shrink-0" />
+          <div className="flex items-center gap-3 px-3 py-2" style={{ background: "#fff" }}>
+            <div className="text-2xl">{nextLimited.emoji}</div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold truncate" style={{ color: "#1a3d52" }}>{nextLimited.name}</p>
+              <p className="text-xs" style={{ color: "#8aaab8" }}>Starts {nextLimited.startDate}</p>
+            </div>
+            <ChevronRight size={14} style={{ color: "#8aaab8" }} />
+          </div>
         </div>
       )}
 
@@ -285,47 +297,40 @@ export function GachaScreen({ coins, ownedCards, onSpend, onGain, pityCount, set
       <AnimatePresence>
         {showResults && (
           <>
-            {/* Dark backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 bg-black/65"
+              className="fixed inset-0 z-50"
+              style={{ background: "rgba(0,0,0,0.7)" }}
               onClick={close}
             />
-            {/* Sheet */}
             <motion.div
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 32, stiffness: 380 }}
-              className="fixed bottom-0 left-0 right-0 z-50 bg-gray-950 rounded-t-3xl overflow-hidden"
+              className="fixed bottom-0 left-0 right-0 z-50 os-window"
+              style={{ borderRadius: "8px 8px 0 0", background: "#1a3d52" }}
             >
-              {/* Drag handle */}
-              <div className="flex justify-center pt-3 pb-1">
-                <div className="w-10 h-1 rounded-full bg-white/20" />
-              </div>
-
-              {/* Header */}
-              <div className="flex items-center justify-between px-4 py-2">
-                <span className="text-white font-bold text-base" style={{ fontFamily: "'Outfit', sans-serif" }}>
-                  {pulledCards.length === 1 ? "✨ Single Pull!" : "✨ 10 Pull Results!"}
+              {/* Titlebar */}
+              <div className="os-titlebar" style={{ background: "linear-gradient(180deg, #2a5a70 0%, #1a3d52 100%)", borderColor: "#3d7a98" }}>
+                <div className="os-btn-red" onClick={close} style={{ cursor: "pointer" }} />
+                <div className="os-btn-yellow" /><div className="os-btn-green" />
+                <span className="os-titlebar-title" style={{ color: "#cde5f0" }}>
+                  {pulledCards.length === 1 ? "✨ SINGLE PULL RESULT" : "✨ 10 PULL RESULTS"}
                 </span>
-                <div className="flex gap-2">
-                  <button
-                    onClick={revealAll}
-                    className="bg-white/15 text-white text-xs px-3 py-1.5 rounded-xl font-semibold"
-                  >
-                    Reveal All
+                <div className="flex gap-2 ml-2">
+                  <button onClick={revealAll} className="retro-btn text-xs py-0 px-2" style={{ background: "rgba(255,255,255,0.15)", color: "#cde5f0", borderColor: "rgba(255,255,255,0.3)", boxShadow: "none", fontSize: "0.7rem" }}>
+                    REVEAL ALL
                   </button>
-                  <button onClick={close} className="bg-white/15 text-white rounded-xl p-1.5">
-                    <X size={16} />
+                  <button onClick={close} className="retro-btn py-0 px-1.5" style={{ background: "rgba(255,255,255,0.15)", color: "#cde5f0", borderColor: "rgba(255,255,255,0.3)", boxShadow: "none" }}>
+                    <X size={12} />
                   </button>
                 </div>
               </div>
 
-              {/* Cards grid */}
-              <div className="px-3 py-2">
+              <div style={{ background: "#1a3d52", padding: "12px" }}>
                 {pulledCards.length === 1 ? (
                   <div className="w-44 mx-auto py-2">
                     <CardReveal char={pulledCards[0]} index={0} revealed={revealed[0]} onClick={() => revealOne(0)} size="lg" />
@@ -339,17 +344,16 @@ export function GachaScreen({ coins, ownedCards, onSpend, onGain, pityCount, set
                 )}
               </div>
 
-              {/* Rarity summary + pull again */}
-              <div className="px-4 pt-3 pb-8 border-t border-white/10 mt-1">
+              <div className="px-4 pt-3 pb-8" style={{ borderTop: "2px solid rgba(255,255,255,0.1)", background: "#1a3d52" }}>
                 <div className="flex justify-around text-center mb-3">
                   {(["UR", "SSR", "SR", "R"] as Rarity[]).map(r => {
                     const count = pulledCards.filter(c => c.rarity === r).length;
                     return (
-                      <div key={r} className={count > 0 ? "opacity-100" : "opacity-25"}>
-                        <div className={`font-bold text-xl ${r === "UR" ? "text-rose-400" : r === "SSR" ? "text-amber-400" : r === "SR" ? "text-purple-400" : "text-slate-400"}`}>
+                      <div key={r} style={{ opacity: count > 0 ? 1 : 0.25 }}>
+                        <div className="vt" style={{ fontSize: "1.4rem", color: r === "UR" ? "#f87171" : r === "SSR" ? "#fbbf24" : r === "SR" ? "#c084fc" : "#94a3b8" }}>
                           {count}
                         </div>
-                        <div className="text-white/50 text-xs">{r}</div>
+                        <div className="vt" style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.5)" }}>{r}</div>
                       </div>
                     );
                   })}
@@ -357,10 +361,9 @@ export function GachaScreen({ coins, ownedCards, onSpend, onGain, pityCount, set
                 <button
                   onClick={() => { close(); doPull(pulledCards.length === 1 ? 1 : 10); }}
                   disabled={coins < (pulledCards.length === 1 ? PULL_COST.single : PULL_COST.ten)}
-                  className="w-full bg-primary text-white rounded-2xl py-3 font-bold disabled:opacity-50 active:scale-98 transition-transform"
-                  style={{ fontFamily: "'Outfit', sans-serif" }}
+                  className="retro-btn retro-btn-primary w-full py-2.5 disabled:opacity-50"
                 >
-                  Pull Again
+                  <span className="vt" style={{ fontSize: "1.1rem" }}>PULL AGAIN</span>
                 </button>
               </div>
             </motion.div>

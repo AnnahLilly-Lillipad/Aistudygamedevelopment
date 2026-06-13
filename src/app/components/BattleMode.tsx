@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { motion } from "motion/react";
-import { Swords, Shield, Zap, X, Sparkles } from "lucide-react";
+import { Swords, Shield, Zap, Sparkles } from "lucide-react";
 import { CHARACTERS, type Character, type OwnedCard } from "../data/characters";
 import { CardImage } from "./CardImage";
 
@@ -84,14 +84,6 @@ export function BattleMode({ ownedCards, onEarnCoins, onRecordWin }: Props) {
 
   const addLog = (msg: string) => setLog(prev => [msg, ...prev].slice(0, 8));
 
-  const applyDmg = (target: "player" | "enemy", idx: number, dmg: number, setter: React.Dispatch<React.SetStateAction<BattleCharState[]>>) => {
-    setter(prev => {
-      const next = [...prev];
-      next[idx] = { ...next[idx], hp: Math.max(0, next[idx].hp - dmg) };
-      return next;
-    });
-  };
-
   const doAction = useCallback((action: "attack" | "skill" | "defend") => {
     if (isAnimating || turn !== "player") return;
     if (action === "skill" && skillCooldown > 0) return;
@@ -173,116 +165,126 @@ export function BattleMode({ ownedCards, onEarnCoins, onRecordWin }: Props) {
   if (state === "teamSelect") {
     return (
       <div className="max-w-2xl mx-auto">
-        {/* Page header */}
-        <div
-          className="relative px-5 pt-9 pb-5 overflow-hidden mb-4"
-          style={{ background: "linear-gradient(135deg, #7f1d1d 0%, #dc2626 45%, #f97316 100%)" }}
-        >
-          <div className="absolute -right-6 -top-6 w-32 h-32 rounded-full" style={{ background: "rgba(255,255,255,0.07)" }} />
-          <p className="text-white/60 text-xs font-bold tracking-widest mb-0.5">BATTLE</p>
-          <h1 className="text-white font-black text-2xl relative" style={{ fontFamily: "'Outfit', sans-serif" }}>Battle Mode</h1>
-          <p className="text-white/65 text-sm mt-1 relative">Build your team · Defeat enemies · Earn coins</p>
-        </div>
-        <div className="p-4 space-y-4">
-
-        {/* Enemy selector */}
-        <div>
-          <p className="text-sm font-semibold text-muted-foreground mb-2">Choose Enemy</p>
-          <div className="flex gap-2 overflow-x-auto pb-1">
-            {ENEMY_TEAMS.map((team, i) => (
-              <button key={i} onClick={() => setEnemyTeamIdx(i)} className={`flex-shrink-0 px-4 py-2.5 rounded-2xl text-sm font-semibold transition-colors ${enemyTeamIdx === i ? "bg-red-500 text-white" : "bg-white border border-border text-muted-foreground"}`}>{team.name}</button>
-            ))}
+        {/* Header */}
+        <div className="os-window mx-3 mt-3 mb-3">
+          <div className="os-titlebar">
+            <div className="os-btn-red" /><div className="os-btn-yellow" /><div className="os-btn-green" />
+            <span className="os-titlebar-title">BATTLE.EXE</span>
+          </div>
+          <div style={{ background: "#ddeef6", padding: "8px 12px" }}>
+            <p className="vt" style={{ fontSize: "1.3rem", color: "#1a3d52" }}>⚔ BATTLE MODE</p>
+            <p className="text-xs" style={{ color: "#5a7d8a" }}>Build your team · Defeat enemies · Earn coins</p>
           </div>
         </div>
 
-        {/* Enemy preview */}
-        <div className="bg-white rounded-2xl border border-border p-4 shadow-sm">
-          <p className="text-xs text-muted-foreground mb-3">Enemy Team</p>
-          <div className="flex gap-2">
-            {ENEMY_TEAMS[enemyTeamIdx].chars.map(id => {
-              const char = CHARACTERS.find(c => c.id === id)!;
-              return <div key={id} className="flex-1"><CardImage character={char} size="sm" showName /></div>;
-            })}
-          </div>
-        </div>
-
-        {/* Team select */}
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-semibold text-muted-foreground">Your Team ({playerTeam.length}/3)</p>
-            {playerTeam.length > 0 && <button onClick={() => setPlayerTeam([])} className="text-xs text-red-500 font-semibold">Clear</button>}
-          </div>
-
-          {playerTeam.length > 0 && (
-            <div className="flex gap-2 mb-3">
-              {playerTeam.map(id => {
-                const char = CHARACTERS.find(c => c.id === id)!;
-                const isAwakened = ownedCards.find(oc => oc.characterId === id)?.awakened === true;
-                return (
-                  <div key={id} className="flex-1 relative">
-                    <CardImage character={char} size="sm" showName />
-                    {isAwakened && (
-                      <div className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center" style={{ background: "#f59e0b", boxShadow: "0 0 8px rgba(251,191,36,0.7)" }}>
-                        <Sparkles size={10} className="text-white" />
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+        <div className="px-3 space-y-3">
+          {/* Enemy selector */}
+          <div className="os-window">
+            <div className="os-titlebar">
+              <div className="os-btn-red" />
+              <span className="os-titlebar-title">CHOOSE ENEMY</span>
             </div>
-          )}
-
-          {ownedChars.length === 0 ? (
-            <div className="bg-muted rounded-2xl p-6 text-center">
-              <p className="text-muted-foreground text-sm">Pull some cards first!</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-5 gap-2 max-h-64 overflow-y-auto">
-              {ownedChars.map(char => {
-                const isAwakened = ownedCards.find(oc => oc.characterId === char.id)?.awakened === true;
-                const isSelected = playerTeam.includes(char.id);
-                return (
+            <div style={{ background: "#f0f8fc", padding: "8px" }}>
+              <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+                {ENEMY_TEAMS.map((team, i) => (
                   <button
-                    key={char.id}
-                    onClick={() => toggleMember(char.id)}
-                    className="relative rounded-xl overflow-visible transition-all"
-                    style={{
-                      border: `2px solid ${isSelected ? (isAwakened ? "#f59e0b" : "var(--primary)") : "transparent"}`,
-                      transform: isSelected ? "scale(1.06)" : "scale(1)",
-                    }}
+                    key={i}
+                    onClick={() => setEnemyTeamIdx(i)}
+                    className="retro-btn flex-shrink-0 text-sm py-1.5"
+                    style={enemyTeamIdx === i ? { background: "#d64f4f", color: "#fff", borderColor: "#b03a3a" } : {}}
                   >
-                    <div className="rounded-[10px] overflow-hidden">
-                      <CardImage character={char} size="xs" showName />
-                    </div>
-                    {isAwakened && (
-                      <div
-                        className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center z-10"
-                        style={{ background: "#f59e0b", boxShadow: "0 0 6px rgba(251,191,36,0.8)" }}
-                      >
-                        <Sparkles size={8} className="text-white" />
-                      </div>
-                    )}
+                    {team.name}
                   </button>
-                );
-              })}
+                ))}
+              </div>
+              <div className="mt-2 flex gap-2">
+                {ENEMY_TEAMS[enemyTeamIdx].chars.map(id => {
+                  const char = CHARACTERS.find(c => c.id === id)!;
+                  return <div key={id} className="flex-1"><CardImage character={char} size="sm" showName /></div>;
+                })}
+              </div>
             </div>
+          </div>
+
+          {/* Team select */}
+          <div className="os-window">
+            <div className="os-titlebar">
+              <div className="os-btn-green" />
+              <span className="os-titlebar-title">YOUR TEAM ({playerTeam.length}/3)</span>
+              {playerTeam.length > 0 && (
+                <button className="retro-btn py-0 px-2 text-xs ml-1" style={{ background: "#ff6b6b", color: "#fff", borderColor: "#e05555", boxShadow: "none", fontSize: "0.65rem" }} onClick={() => setPlayerTeam([])}>
+                  CLEAR
+                </button>
+              )}
+            </div>
+            <div style={{ background: "#f0f8fc", padding: "8px" }}>
+              {playerTeam.length > 0 && (
+                <div className="flex gap-2 mb-3">
+                  {playerTeam.map(id => {
+                    const char = CHARACTERS.find(c => c.id === id)!;
+                    const isAwakened = ownedCards.find(oc => oc.characterId === id)?.awakened === true;
+                    return (
+                      <div key={id} className="flex-1 relative">
+                        <CardImage character={char} size="sm" showName />
+                        {isAwakened && (
+                          <div className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center" style={{ background: "#f59e0b", boxShadow: "0 0 8px rgba(251,191,36,0.7)" }}>
+                            <Sparkles size={10} color="#fff" />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {ownedChars.length === 0 ? (
+                <div className="rounded p-4 text-center border-2" style={{ background: "#ddeef6", borderColor: "#7ab2c8", borderStyle: "dashed" }}>
+                  <p className="text-sm" style={{ color: "#5a7d8a" }}>Pull some cards first!</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-5 gap-2 max-h-64 overflow-y-auto">
+                  {ownedChars.map(char => {
+                    const isAwakened = ownedCards.find(oc => oc.characterId === char.id)?.awakened === true;
+                    const isSelected = playerTeam.includes(char.id);
+                    return (
+                      <button
+                        key={char.id}
+                        onClick={() => toggleMember(char.id)}
+                        className="relative rounded overflow-visible transition-all"
+                        style={{
+                          border: `2px solid ${isSelected ? (isAwakened ? "#f59e0b" : "#5b9aba") : "#b0d0e2"}`,
+                          transform: isSelected ? "scale(1.06)" : "scale(1)",
+                        }}
+                      >
+                        <div className="rounded overflow-hidden" style={{ borderRadius: "3px" }}>
+                          <CardImage character={char} size="xs" showName />
+                        </div>
+                        {isAwakened && (
+                          <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center z-10" style={{ background: "#f59e0b", boxShadow: "0 0 6px rgba(251,191,36,0.8)" }}>
+                            <Sparkles size={8} color="#fff" />
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {ownedChars.length === 0 && (
+            <button onClick={() => setPlayerTeam(DEMO_TEAM)} className="retro-btn w-full py-2 text-sm">
+              USE DEMO TEAM (Dazai, Atsushi, Yosano)
+            </button>
           )}
-        </div>
 
-        {ownedChars.length === 0 && (
-          <button onClick={() => { setPlayerTeam(DEMO_TEAM); }} className="w-full py-3 rounded-2xl bg-secondary text-secondary-foreground font-semibold text-sm">
-            Use Demo Team (Dazai, Atsushi, Yosano)
+          <button
+            onClick={() => startBattle()}
+            disabled={playerTeam.length === 0}
+            className="retro-btn retro-btn-primary w-full py-3 text-center disabled:opacity-50"
+          >
+            <span className="vt" style={{ fontSize: "1.2rem" }}>⚔ START BATTLE!</span>
           </button>
-        )}
-
-        <button
-          onClick={() => startBattle()}
-          disabled={playerTeam.length === 0}
-          className="w-full py-4 rounded-2xl bg-gradient-to-r from-red-500 to-orange-500 text-white font-bold text-lg shadow-md disabled:opacity-50"
-          style={{ fontFamily: "'Outfit', sans-serif" }}
-        >
-          ⚔️ Start Battle!
-        </button>
         </div>
       </div>
     );
@@ -292,93 +294,115 @@ export function BattleMode({ ownedCards, onEarnCoins, onRecordWin }: Props) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-8 text-center h-full">
         <div className="text-6xl mb-4">{winner === "player" ? "🏆" : "💀"}</div>
-        <h2 style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: "2rem", color: "var(--foreground)" }}>
-          {winner === "player" ? "Victory!" : "Defeated"}
-        </h2>
-        {winner === "player" && <div className="flex items-center gap-2 mt-4 text-2xl font-bold text-amber-500">🪙 +150</div>}
+        <p className="vt" style={{ fontSize: "2rem", color: "#1a3d52" }}>
+          {winner === "player" ? "VICTORY!" : "DEFEATED"}
+        </p>
+        {winner === "player" && (
+          <div className="flex items-center gap-2 mt-4 vt" style={{ fontSize: "1.4rem", color: "#d97706" }}>🪙 +150 COINS</div>
+        )}
         <div className="flex gap-3 mt-6 w-full max-w-xs">
-          <button onClick={() => setState("teamSelect")} className="flex-1 py-3 rounded-2xl bg-white border-2 border-border font-bold">Back</button>
-          <button onClick={() => startBattle()} className="flex-1 py-3 rounded-2xl bg-primary text-white font-bold">Retry</button>
+          <button onClick={() => setState("teamSelect")} className="retro-btn flex-1 py-2.5">BACK</button>
+          <button onClick={() => startBattle()} className="retro-btn retro-btn-primary flex-1 py-2.5">RETRY</button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="h-full flex flex-col p-4 max-w-2xl mx-auto">
+    <div className="h-full flex flex-col p-3 max-w-2xl mx-auto gap-2">
       {/* Enemy */}
-      <div className="mb-3">
-        <p className="text-xs text-muted-foreground mb-2 font-semibold">ENEMY</p>
-        <div className="flex gap-2">
-          {enemyStates.map((es, i) => (
-            <div key={i} className={`flex-1 ${es.hp === 0 ? "opacity-30 grayscale" : ""}`}>
-              <div className="rounded-2xl overflow-hidden"><CardImage character={es.char} size="xs" showName /></div>
-              <div className="mt-1 h-2 bg-muted rounded-full overflow-hidden">
-                <div className="h-full bg-red-500 rounded-full transition-all" style={{ width: `${(es.hp / es.maxHp) * 100}%` }} />
+      <div className="os-window flex-shrink-0">
+        <div className="os-titlebar">
+          <div className="os-btn-red" />
+          <span className="os-titlebar-title">ENEMY TEAM</span>
+        </div>
+        <div style={{ background: "#fff0f0", padding: "8px" }}>
+          <div className="flex gap-2">
+            {enemyStates.map((es, i) => (
+              <div key={i} className={`flex-1 ${es.hp === 0 ? "opacity-30 grayscale" : ""}`}>
+                <div className="rounded overflow-hidden border" style={{ borderColor: "#7ab2c8" }}>
+                  <CardImage character={es.char} size="xs" showName />
+                </div>
+                <div className="mt-1 h-2 rounded overflow-hidden" style={{ background: "#fdd" }}>
+                  <div className="h-full rounded transition-all" style={{ width: `${(es.hp / es.maxHp) * 100}%`, background: "#e05555" }} />
+                </div>
               </div>
-            </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Battle Log */}
+      <div className="os-window flex-1 min-h-0">
+        <div className="os-titlebar">
+          <div className="os-btn-green" />
+          <span className="os-titlebar-title">BATTLE LOG</span>
+        </div>
+        <div className="p-2 overflow-y-auto h-full" style={{ background: "#fff" }}>
+          {log.map((entry, i) => (
+            <p key={i} className="text-xs mb-0.5 vt" style={{ color: i === 0 ? "#1a3d52" : "#5a7d8a", fontSize: "0.85rem" }}>{entry}</p>
           ))}
         </div>
       </div>
 
-      {/* Log */}
-      <div className="flex-1 bg-white rounded-2xl border border-border p-3 overflow-y-auto shadow-sm mb-3 min-h-0">
-        {log.map((entry, i) => (
-          <p key={i} className={`text-sm ${i === 0 ? "text-foreground font-semibold" : "text-muted-foreground"} mb-0.5`}>{entry}</p>
-        ))}
-      </div>
-
-      {/* Player */}
-      <div className="mb-3">
-        <p className="text-xs text-muted-foreground mb-2 font-semibold">YOUR TEAM</p>
-        <div className="flex gap-2">
-          {playerStates.map((ps, i) => {
-            const isActive = ps.hp > 0 && turn === "player" && playerStates.find(s => s.hp > 0)?.char.id === ps.char.id;
-            return (
-              <div key={i} className={`flex-1 ${ps.hp === 0 ? "opacity-30 grayscale" : ""}`}>
-                <div className={`rounded-2xl overflow-hidden border-2 transition-all ${isActive ? "border-primary shadow-md" : "border-transparent"}`}>
-                  <CardImage character={ps.char} size="xs" showName />
+      {/* Player team */}
+      <div className="os-window flex-shrink-0">
+        <div className="os-titlebar">
+          <div className="os-btn-green" />
+          <span className="os-titlebar-title">YOUR TEAM</span>
+        </div>
+        <div style={{ background: "#f0fff4", padding: "8px" }}>
+          <div className="flex gap-2">
+            {playerStates.map((ps, i) => {
+              const isActive = ps.hp > 0 && turn === "player" && playerStates.find(s => s.hp > 0)?.char.id === ps.char.id;
+              return (
+                <div key={i} className={`flex-1 ${ps.hp === 0 ? "opacity-30 grayscale" : ""}`}>
+                  <div className="rounded overflow-hidden border-2 transition-all" style={{ borderColor: isActive ? "#5b9aba" : "#b0d0e2" }}>
+                    <CardImage character={ps.char} size="xs" showName />
+                  </div>
+                  <div className="mt-1 h-2 rounded overflow-hidden" style={{ background: "#ddf5e8" }}>
+                    <div className="h-full rounded transition-all" style={{ width: `${(ps.hp / ps.maxHp) * 100}%`, background: "#22c55e" }} />
+                  </div>
                 </div>
-                <div className="mt-1 h-2 bg-muted rounded-full overflow-hidden">
-                  <div className="h-full bg-green-500 rounded-full transition-all" style={{ width: `${(ps.hp / ps.maxHp) * 100}%` }} />
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </div>
 
       {/* Actions */}
-      <div className={`grid grid-cols-3 gap-2 ${(turn !== "player" || isAnimating) ? "opacity-40 pointer-events-none" : ""}`}>
-        <button onClick={() => doAction("attack")} className="py-3 rounded-2xl bg-gradient-to-b from-red-500 to-red-600 text-white font-bold shadow-sm" style={{ fontFamily: "'Outfit', sans-serif" }}>
-          <Swords size={18} className="mx-auto mb-0.5" />
-          <div className="text-sm">Attack</div>
+      <div className={`grid grid-cols-3 gap-2 flex-shrink-0 ${(turn !== "player" || isAnimating) ? "opacity-40 pointer-events-none" : ""}`}>
+        <button onClick={() => doAction("attack")} className="retro-btn py-2.5 text-center" style={{ background: "#d64f4f", color: "#fff", borderColor: "#b03a3a" }}>
+          <Swords size={16} className="mx-auto mb-0.5" />
+          <div className="vt" style={{ fontSize: "0.9rem" }}>ATTACK</div>
         </button>
         <button
           onClick={() => doAction("skill")}
           disabled={skillCooldown > 0}
-          className="py-3 rounded-2xl bg-gradient-to-b from-purple-500 to-indigo-600 text-white font-bold shadow-sm disabled:opacity-50 relative"
-          style={{ fontFamily: "'Outfit', sans-serif" }}
+          className="retro-btn py-2.5 text-center relative disabled:opacity-50"
+          style={{ background: "#6b21a8", color: "#fff", borderColor: "#4c1270" }}
         >
-          <Zap size={18} className="mx-auto mb-0.5" />
-          <div className="text-sm">Skill</div>
+          <Zap size={16} className="mx-auto mb-0.5" />
+          <div className="vt" style={{ fontSize: "0.9rem" }}>SKILL</div>
           {skillCooldown > 0 && (
-            <span className="absolute top-1 right-1.5 text-xs bg-black/40 rounded-full px-1 font-bold">{skillCooldown}</span>
+            <span className="absolute top-1 right-1.5 text-xs font-bold rounded-full px-1" style={{ background: "rgba(0,0,0,0.4)", color: "#fff" }}>{skillCooldown}</span>
           )}
         </button>
         <button
           onClick={() => doAction("defend")}
-          className={`py-3 rounded-2xl font-bold shadow-sm transition-all ${isDefending ? "bg-blue-200 text-blue-700 border-2 border-blue-400" : "bg-gradient-to-b from-blue-400 to-blue-500 text-white"}`}
-          style={{ fontFamily: "'Outfit', sans-serif" }}
+          className="retro-btn py-2.5 text-center transition-all"
+          style={isDefending ? { background: "#cde5f0", color: "#1a3d52", borderColor: "#5b9aba" } : { background: "#5b9aba", color: "#fff", borderColor: "#3d7a98" }}
         >
-          <Shield size={18} className="mx-auto mb-0.5" />
-          <div className="text-sm">{isDefending ? "Braced" : "Defend"}</div>
+          <Shield size={16} className="mx-auto mb-0.5" />
+          <div className="vt" style={{ fontSize: "0.9rem" }}>{isDefending ? "BRACED" : "DEFEND"}</div>
         </button>
       </div>
-      {turn === "enemy" && <p className="text-center text-sm text-muted-foreground mt-2 animate-pulse">Enemy is thinking…</p>}
-      {turn === "player" && !isAnimating && (
-        <p className="text-center text-xs text-muted-foreground mt-1">
-          {isDefending ? "🛡️ Defending — next hit blocked 50%" : skillCooldown > 0 ? `⚡ Skill ready in ${skillCooldown} turn${skillCooldown > 1 ? "s" : ""}` : ""}
+      {(turn === "enemy" || isAnimating) && (
+        <p className="text-center text-xs animate-pulse flex-shrink-0 vt" style={{ color: "#5a7d8a", fontSize: "0.85rem" }}>Enemy is thinking…</p>
+      )}
+      {turn === "player" && !isAnimating && (isDefending || skillCooldown > 0) && (
+        <p className="text-center text-xs flex-shrink-0 vt" style={{ color: "#5a7d8a", fontSize: "0.8rem" }}>
+          {isDefending ? "🛡️ Defending — next hit blocked 50%" : `⚡ Skill ready in ${skillCooldown} turn${skillCooldown > 1 ? "s" : ""}`}
         </p>
       )}
     </div>
