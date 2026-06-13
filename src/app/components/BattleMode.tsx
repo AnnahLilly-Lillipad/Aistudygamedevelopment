@@ -30,11 +30,12 @@ interface BattleCharState { char: Character; hp: number; maxHp: number; }
 interface Props {
   ownedCards: OwnedCard[];
   onEarnCoins: (amount: number, reason: string) => void;
+  onRecordWin?: () => void;
 }
 
 const DEMO_TEAM = [1, 2, 5];
 
-export function BattleMode({ ownedCards, onEarnCoins }: Props) {
+export function BattleMode({ ownedCards, onEarnCoins, onRecordWin }: Props) {
   const [state, setState] = useState<BattleState>("teamSelect");
   const [playerTeam, setPlayerTeam] = useState<number[]>([]);
   const [enemyTeamIdx, setEnemyTeamIdx] = useState(0);
@@ -111,6 +112,7 @@ export function BattleMode({ ownedCards, onEarnCoins }: Props) {
         setWinner("player");
         setState("result");
         onEarnCoins(150, "⚔️ Battle Victory!");
+        onRecordWin?.();
         setIsAnimating(false);
       }
       return next;

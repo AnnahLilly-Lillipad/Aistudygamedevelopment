@@ -1,19 +1,11 @@
 import { useState } from "react";
-import { Trophy, Flame, BookOpen, Star, Zap, ChevronRight, TrendingUp } from "lucide-react";
+import { Zap } from "lucide-react";
 import { ACHIEVEMENTS, CHARACTERS, type OwnedCard } from "../data/characters";
 
 const HEATMAP_DATA = Array.from({ length: 91 }, (_, i) => ({
   day: i,
   value: Math.random() < 0.6 ? Math.floor(Math.random() * 5) : 0,
 }));
-
-const TITLES = [
-  { id: 1, name: "Aspiring Detective", earned: true, equipped: true },
-  { id: 2, name: "Gacha Enjoyer", earned: true, equipped: false },
-  { id: 3, name: "Quiz Champion", earned: true, equipped: false },
-  { id: 4, name: "UR Chaser", earned: false, equipped: false },
-  { id: 5, name: "Dazai Stan", earned: false, equipped: false },
-];
 
 const GLOBAL_BUFFS = [
   { id: 1, name: "Coin Boost I", description: "+5% coin gain from all sources", cost: "50 Rare Drops", unlocked: true },
@@ -26,27 +18,51 @@ const LEADERBOARD = [
   { rank: 1, name: "Dazai_Fan99", xp: 48200, avatar: "🏆" },
   { rank: 2, name: "PortMafiaAce", xp: 41500, avatar: "⭐" },
   { rank: 3, name: "BSDScholar", xp: 38900, avatar: "📚" },
-  { rank: 4, name: "You", xp: 2450, avatar: "👤", isUser: true },
-  { rank: 5, name: "ChuuyaSimp", xp: 2100, avatar: "🌹" },
-  { rank: 6, name: "RanpoDetective", xp: 1800, avatar: "🔍" },
+  { rank: 4, name: "ChuuyaSimp", xp: 2100, avatar: "🌹" },
+  { rank: 5, name: "RanpoDetective", xp: 1800, avatar: "🔍" },
 ];
 
 interface Props {
   coins: number;
   ownedCards: OwnedCard[];
+  username: string;
+  avatar: string;
+  xp: number;
+  level: number;
+  streak: number;
+  totalBattleWins: number;
+  totalPulls: number;
+  onLogout: () => void;
+  xpToNextLevel: (level: number) => number;
 }
 
-export function ProfilePage({ coins, ownedCards }: Props) {
+export function ProfilePage({
+  coins,
+  ownedCards,
+  username,
+  avatar,
+  xp,
+  level,
+  streak,
+  totalBattleWins,
+  totalPulls,
+  onLogout,
+  xpToNextLevel,
+}: Props) {
   const [activeTab, setActiveTab] = useState<"overview" | "achievements" | "buffs" | "leaderboard" | "legal">("overview");
   const [leaderboardFilter, setLeaderboardFilter] = useState<"Global" | "Friends" | "Weekly">("Global");
   const [collectedExpeditions, setCollectedExpeditions] = useState<Set<number>>(new Set());
   const [buffFeedback, setBuffFeedback] = useState<number | null>(null);
   const [expeditionMsg, setExpeditionMsg] = useState<string | null>(null);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const ownedCount = new Set(ownedCards.map(c => c.characterId)).size;
   const urCount = ownedCards.filter(oc => CHARACTERS.find(c => c.id === oc.characterId)?.rarity === "UR").length;
   const ssrCount = ownedCards.filter(oc => CHARACTERS.find(c => c.id === oc.characterId)?.rarity === "SSR").length;
   const earnedAchievements = ACHIEVEMENTS.filter(a => a.earned).length;
+
+  const xpNeeded = xpToNextLevel(level);
+  const xpProgress = Math.min(100, Math.round((xp / xpNeeded) * 100));
 
   const heatmapIntensity = (val: number) => {
     if (val === 0) return "bg-muted";
@@ -64,38 +80,77 @@ export function ProfilePage({ coins, ownedCards }: Props) {
     { id: "legal", label: "Legal" },
   ] as const;
 
+  const userLeaderboardEntry = { rank: 4, name: username, xp, avatar, isUser: true };
+  const fullLeaderboard = [...LEADERBOARD.filter(e => e.xp > xp), userLeaderboardEntry, ...LEADERBOARD.filter(e => e.xp <= xp)]
+    .sort((a, b) => b.xp - a.xp)
+    .map((e, i) => ({ ...e, rank: i + 1 }));
+
   return (
     <div className="h-full flex flex-col">
       {/* Profile header */}
       <div className="bg-gradient-to-br from-primary to-indigo-700 p-6 text-white">
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center text-4xl">
-            👤
+          <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center text-4xl select-none">
+            {avatar}
           </div>
-          <div className="flex-1">
-            <p className="text-white/70 text-sm">Scholar Level 12</p>
-            <h2 style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: "1.4rem" }}>Dev Scholar</h2>
-            <div className="flex items-center gap-1 mt-1">
-              <span className="text-xs bg-amber-400 text-amber-900 font-bold px-2 py-0.5 rounded-full">Aspiring Detective</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-white/70 text-sm">Scholar Level {level}</p>
+            <h2
+              className="truncate"
+              style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: "1.4rem" }}
+            >
+              {username}
+            </h2>
+            <span className="text-xs bg-amber-400 text-amber-900 font-bold px-2 py-0.5 rounded-full inline-block mt-1">
+              Aspiring Detective
+            </span>
+          </div>
+          <div className="text-right flex-shrink-0">
+            <div className="text-xl font-bold" style={{ fontFamily: "'Outfit', sans-serif" }}>
+              🪙 {coins.toLocaleString()}
             </div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold" style={{ fontFamily: "'Outfit', sans-serif" }}>🪙 {coins.toLocaleString()}</div>
             <div className="text-white/70 text-xs">coins</div>
+            <button
+              onClick={() => setShowLogoutConfirm(true)}
+              className="mt-1 text-white/50 hover:text-white/80 text-xs font-semibold transition-colors"
+            >
+              Log out
+            </button>
           </div>
         </div>
 
         {/* XP bar */}
         <div className="mt-4">
           <div className="flex items-center justify-between text-xs text-white/70 mb-1">
-            <span>XP 2,450</span>
-            <span>Next: 5,000</span>
+            <span>XP {xp.toLocaleString()}</span>
+            <span>Next level: {xpNeeded.toLocaleString()}</span>
           </div>
           <div className="h-2 bg-white/20 rounded-full overflow-hidden">
-            <div className="h-full bg-amber-400 rounded-full" style={{ width: "49%" }} />
+            <div className="h-full bg-amber-400 rounded-full transition-all" style={{ width: `${xpProgress}%` }} />
           </div>
         </div>
       </div>
+
+      {/* Logout confirmation */}
+      {showLogoutConfirm && (
+        <div className="bg-rose-50 border-b border-rose-200 p-3 flex items-center justify-between gap-3">
+          <p className="text-sm text-rose-700 font-semibold">Log out of <span className="font-black">{username}</span>?</p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowLogoutConfirm(false)}
+              className="px-3 py-1.5 rounded-xl text-xs font-bold border border-rose-200 text-rose-600"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onLogout}
+              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-500 text-white"
+            >
+              Log out
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="flex gap-1 p-3 bg-white border-b border-border">
@@ -115,17 +170,20 @@ export function ProfilePage({ coins, ownedCards }: Props) {
         {/* Overview */}
         {activeTab === "overview" && (
           <div className="p-4 space-y-4">
-            {/* Stats grid */}
             <div className="grid grid-cols-2 gap-3">
               {[
                 { label: "Cards Owned", value: ownedCount, icon: "🃏", sub: `${CHARACTERS.length} total` },
                 { label: "UR Cards", value: urCount, icon: "💎", sub: `${ssrCount} SSR` },
+                { label: "Battle Wins", value: totalBattleWins, icon: "⚔️", sub: "all time" },
+                { label: "Total Pulls", value: totalPulls, icon: "✨", sub: "all banners" },
                 { label: "Achievements", value: `${earnedAchievements}/${ACHIEVEMENTS.length}`, icon: "🏆", sub: "unlocked" },
-                { label: "Study Streak", value: "7 days", icon: "🔥", sub: "best: 14" },
+                { label: "Study Streak", value: `${streak} days`, icon: "🔥", sub: `Level ${level} Scholar` },
               ].map(s => (
                 <div key={s.label} className="bg-white rounded-2xl border border-border p-4 shadow-sm">
                   <div className="text-2xl mb-1">{s.icon}</div>
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: "1.3rem", color: "var(--foreground)" }}>{s.value}</div>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: "1.3rem", color: "var(--foreground)" }}>
+                    {s.value}
+                  </div>
                   <div className="text-xs text-muted-foreground">{s.label}</div>
                   <div className="text-xs text-muted-foreground">{s.sub}</div>
                 </div>
@@ -134,7 +192,9 @@ export function ProfilePage({ coins, ownedCards }: Props) {
 
             {/* Heatmap */}
             <div className="bg-white rounded-2xl border border-border p-4 shadow-sm">
-              <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, color: "var(--foreground)", marginBottom: "0.75rem" }}>Study Heatmap</p>
+              <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, color: "var(--foreground)", marginBottom: "0.75rem" }}>
+                Study Heatmap
+              </p>
               <div className="flex flex-wrap gap-0.5">
                 {HEATMAP_DATA.slice(-91).map((d, i) => (
                   <div
@@ -153,7 +213,9 @@ export function ProfilePage({ coins, ownedCards }: Props) {
             {/* Expedition */}
             <div className="bg-white rounded-2xl border border-border p-4 shadow-sm">
               <div className="flex items-center justify-between mb-3">
-                <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, color: "var(--foreground)" }}>🗺️ Expeditions</p>
+                <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, color: "var(--foreground)" }}>
+                  🗺️ Expeditions
+                </p>
                 <button
                   className="text-xs text-primary font-semibold"
                   onClick={() => setExpeditionMsg(expeditionMsg ? null : "Expedition management coming soon!")}
@@ -162,7 +224,9 @@ export function ProfilePage({ coins, ownedCards }: Props) {
                 </button>
               </div>
               {expeditionMsg && (
-                <div className="bg-primary/10 text-primary text-xs font-semibold rounded-xl px-3 py-2 mb-2">{expeditionMsg}</div>
+                <div className="bg-primary/10 text-primary text-xs font-semibold rounded-xl px-3 py-2 mb-2">
+                  {expeditionMsg}
+                </div>
               )}
               <div className="space-y-2">
                 {[
@@ -201,21 +265,28 @@ export function ProfilePage({ coins, ownedCards }: Props) {
         {activeTab === "achievements" && (
           <div className="p-4 space-y-3">
             {ACHIEVEMENTS.map(ach => (
-              <div key={ach.id} className={`bg-white rounded-2xl border border-border p-4 shadow-sm flex items-center gap-4 ${!ach.earned ? "opacity-50" : ""}`}>
+              <div
+                key={ach.id}
+                className={`bg-white rounded-2xl border border-border p-4 shadow-sm flex items-center gap-4 ${!ach.earned ? "opacity-50" : ""}`}
+              >
                 <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0 ${ach.earned ? "bg-amber-50 border-2 border-amber-200" : "bg-muted border-2 border-border"}`}>
                   {ach.icon}
                 </div>
                 <div className="flex-1">
-                  <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, color: "var(--foreground)" }}>{ach.title}</p>
+                  <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, color: "var(--foreground)" }}>
+                    {ach.title}
+                  </p>
                   <p className="text-xs text-muted-foreground">{ach.description}</p>
                   <div className="flex items-center gap-1 mt-1">
                     <Zap size={12} className="text-amber-500" />
                     <span className="text-xs font-semibold text-amber-500">+{ach.xp} XP</span>
                   </div>
                 </div>
-                {ach.earned && <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-white text-xs">✓</span>
-                </div>}
+                {ach.earned && (
+                  <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-white text-xs">✓</span>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -232,15 +303,21 @@ export function ProfilePage({ coins, ownedCards }: Props) {
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, color: "var(--foreground)" }}>{buff.name}</p>
-                      {buff.unlocked && <span className="text-xs bg-green-100 text-green-600 font-semibold px-2 py-0.5 rounded-full">Active</span>}
+                      <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, color: "var(--foreground)" }}>
+                        {buff.name}
+                      </p>
+                      {buff.unlocked && (
+                        <span className="text-xs bg-green-100 text-green-600 font-semibold px-2 py-0.5 rounded-full">Active</span>
+                      )}
                     </div>
                     <p className="text-xs text-muted-foreground mt-0.5">{buff.description}</p>
                     <div className="flex items-center gap-1 mt-2">
                       <span className="text-xs text-rose-500 font-semibold">💎 {buff.cost}</span>
                     </div>
                     {buffFeedback === buff.id && (
-                      <p className="text-xs text-amber-600 font-semibold mt-1">Not enough Rare Drops. Pull SSR+ cards to earn them!</p>
+                      <p className="text-xs text-amber-600 font-semibold mt-1">
+                        Not enough Rare Drops. Pull SSR+ cards to earn them!
+                      </p>
                     )}
                   </div>
                   {!buff.unlocked && (
@@ -263,7 +340,9 @@ export function ProfilePage({ coins, ownedCards }: Props) {
             <div className="bg-white rounded-2xl border border-border p-5 shadow-sm">
               <div className="text-center mb-4">
                 <div className="text-4xl mb-2">⚖️</div>
-                <h3 style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: "1.1rem", color: "var(--foreground)" }}>Copyright Disclaimer</h3>
+                <h3 style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: "1.1rem", color: "var(--foreground)" }}>
+                  Copyright Disclaimer
+                </h3>
               </div>
               <div className="space-y-3 text-sm text-muted-foreground leading-relaxed">
                 <p>
@@ -317,22 +396,31 @@ export function ProfilePage({ coins, ownedCards }: Props) {
             </div>
             {leaderboardFilter !== "Global" && (
               <div className="bg-secondary rounded-2xl p-4 text-center text-sm text-muted-foreground mb-2">
-                {leaderboardFilter === "Friends" ? "Add friends to see their rankings here!" : "Weekly rankings reset every Monday."}
+                {leaderboardFilter === "Friends"
+                  ? "Add friends to see their rankings here!"
+                  : "Weekly rankings reset every Monday."}
               </div>
             )}
-            {LEADERBOARD.map(entry => (
-              <div key={entry.rank} className={`rounded-2xl p-4 flex items-center gap-3 ${entry.isUser ? "bg-primary/10 border-2 border-primary" : "bg-white border border-border"} shadow-sm`}>
+            {fullLeaderboard.map(entry => (
+              <div
+                key={entry.rank}
+                className={`rounded-2xl p-4 flex items-center gap-3 shadow-sm ${"isUser" in entry && entry.isUser ? "bg-primary/10 border-2 border-primary" : "bg-white border border-border"}`}
+              >
                 <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-sm flex-shrink-0 ${entry.rank <= 3 ? "bg-amber-400 text-white" : "bg-muted text-muted-foreground"}`}>
                   {entry.rank}
                 </div>
                 <div className="text-xl">{entry.avatar}</div>
                 <div className="flex-1">
-                  <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, color: "var(--foreground)" }}>{entry.name}{entry.isUser ? " (You)" : ""}</p>
+                  <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, color: "var(--foreground)" }}>
+                    {entry.name}{"isUser" in entry && entry.isUser ? " (You)" : ""}
+                  </p>
                 </div>
                 <div className="text-right">
                   <div className="flex items-center gap-1">
                     <Zap size={14} className="text-amber-500" />
-                    <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, color: "var(--foreground)" }}>{entry.xp.toLocaleString()}</span>
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, color: "var(--foreground)" }}>
+                      {entry.xp.toLocaleString()}
+                    </span>
                   </div>
                   <span className="text-xs text-muted-foreground">XP</span>
                 </div>

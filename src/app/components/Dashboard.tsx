@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { Target, Trophy, ChevronRight, Zap } from "lucide-react";
+import { Target, Trophy, ChevronRight } from "lucide-react";
 import { CHARACTERS, ACHIEVEMENTS } from "../data/characters";
 import type { OwnedCard } from "../data/characters";
 import { CardImage } from "./CardImage";
@@ -15,47 +14,97 @@ interface Props {
   coins: number;
   ownedCards: OwnedCard[];
   onNavigate: (tab: string) => void;
+  username: string;
+  avatar: string;
+  xp: number;
+  level: number;
+  streak: number;
+  claimedQuests: number[];
+  onClaimQuest: (id: number) => void;
+  onEarnCoins: (amount: number, reason: string) => void;
 }
 
-export function Dashboard({ coins, ownedCards, onNavigate }: Props) {
-  const [claimedQuests, setClaimedQuests] = useState<Set<number>>(new Set([1, 3]));
+function xpForLevel(level: number): number {
+  return level * 1000;
+}
 
+export function Dashboard({
+  coins,
+  ownedCards,
+  onNavigate,
+  username,
+  avatar,
+  xp,
+  level,
+  streak,
+  claimedQuests,
+  onClaimQuest,
+  onEarnCoins,
+}: Props) {
   const recentChars = ownedCards
     .slice(-6).reverse()
     .map(oc => CHARACTERS.find(c => c.id === oc.characterId))
     .filter(Boolean);
 
   const earnedAchievements = ACHIEVEMENTS.filter(a => a.earned);
-  const studyStreak = 7;
-  const totalXP = 2450;
+
+  const xpNeeded = xpForLevel(level);
+  const xpProgress = Math.min(100, Math.round((xp / xpNeeded) * 100));
+
+  function handleClaimQuest(quest: typeof DAILY_QUESTS[0]) {
+    onClaimQuest(quest.id);
+    onEarnCoins(quest.reward, `${quest.icon} Quest complete! +${quest.reward} coins`);
+  }
 
   return (
     <div className="p-4 space-y-5 max-w-2xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-muted-foreground text-sm">Welcome back, Scholar!</p>
-          <h1 style={{ fontFamily: "'Outfit', sans-serif", fontSize: "1.5rem", fontWeight: 800, color: "var(--foreground)" }}>StudyTales</h1>
+          <p className="text-muted-foreground text-sm">
+            Welcome back, <span className="font-bold text-foreground">{username}</span>!
+          </p>
+          <h1 style={{ fontFamily: "'Outfit', sans-serif", fontSize: "1.5rem", fontWeight: 800, color: "var(--foreground)" }}>
+            StudyTales
+          </h1>
         </div>
         <div className="flex items-center gap-2 bg-white rounded-2xl px-4 py-2 shadow-sm border border-border">
           <span className="text-amber-500 text-lg">🪙</span>
-          <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, color: "var(--foreground)", fontSize: "1.1rem" }}>{coins.toLocaleString()}</span>
+          <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, color: "var(--foreground)", fontSize: "1.1rem" }}>
+            {coins.toLocaleString()}
+          </span>
         </div>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
-        {[
-          { label: "Day Streak", value: studyStreak, icon: "🔥" },
-          { label: "Cards", value: ownedCards.length, icon: "🃏" },
-          { label: "XP", value: totalXP.toLocaleString(), icon: "⚡" },
-        ].map(stat => (
-          <div key={stat.label} className="bg-white rounded-2xl p-4 shadow-sm border border-border text-center">
-            <div className="text-2xl mb-1">{stat.icon}</div>
-            <div style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: "1.3rem", color: "var(--foreground)" }}>{stat.value}</div>
-            <div className="text-xs text-muted-foreground">{stat.label}</div>
+        <div className="bg-white rounded-2xl p-4 shadow-sm border border-border text-center">
+          <div className="text-2xl mb-1">🔥</div>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: "1.3rem", color: "var(--foreground)" }}>
+            {streak}
           </div>
-        ))}
+          <div className="text-xs text-muted-foreground">Day Streak</div>
+        </div>
+        <div className="bg-white rounded-2xl p-4 shadow-sm border border-border text-center">
+          <div className="text-2xl mb-1">🃏</div>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: "1.3rem", color: "var(--foreground)" }}>
+            {ownedCards.length}
+          </div>
+          <div className="text-xs text-muted-foreground">Cards</div>
+        </div>
+        <div className="bg-white rounded-2xl p-4 shadow-sm border border-border text-center">
+          <div className="text-xl mb-0.5">⚡</div>
+          <div style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: "1rem", color: "var(--foreground)" }}>
+            Lv.{level}
+          </div>
+          <div className="w-full bg-muted rounded-full h-1.5 mt-1 overflow-hidden">
+            <div
+              className="h-full rounded-full bg-amber-400 transition-all"
+              style={{ width: `${xpProgress}%` }}
+            />
+          </div>
+          <div className="text-xs text-muted-foreground mt-0.5">{xp.toLocaleString()} XP</div>
+        </div>
       </div>
 
       {/* Quick actions */}
@@ -82,42 +131,62 @@ export function Dashboard({ coins, ownedCards, onNavigate }: Props) {
         <div className="px-4 py-3 border-b border-border flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Target size={18} className="text-primary" />
-            <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, color: "var(--foreground)" }}>Daily Quests</span>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, color: "var(--foreground)" }}>
+              Daily Quests
+            </span>
           </div>
-          <span className="text-xs text-muted-foreground">Resets in 14h 32m</span>
+          <span className="text-xs text-muted-foreground">Resets at midnight</span>
         </div>
         <div className="divide-y divide-border">
-          {DAILY_QUESTS.map(quest => (
-            <div key={quest.id} className="px-4 py-3 flex items-center gap-3">
-              <span className="text-xl">{quest.icon}</span>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium" style={{ color: "var(--foreground)" }}>{quest.title}</p>
-                <div className="flex items-center gap-2 mt-1">
-                  <div className="flex-1 bg-muted rounded-full h-1.5 overflow-hidden">
-                    <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${(quest.progress / quest.total) * 100}%` }} />
+          {DAILY_QUESTS.map(quest => {
+            const claimed = claimedQuests.includes(quest.id);
+            return (
+              <div key={quest.id} className="px-4 py-3 flex items-center gap-3">
+                <span className="text-xl">{quest.icon}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium" style={{ color: "var(--foreground)" }}>{quest.title}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <div className="flex-1 bg-muted rounded-full h-1.5 overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-primary transition-all"
+                        style={{ width: `${(quest.progress / quest.total) * 100}%` }}
+                      />
+                    </div>
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">
+                      {quest.progress}/{quest.total}
+                    </span>
                   </div>
-                  <span className="text-xs text-muted-foreground whitespace-nowrap">{quest.progress}/{quest.total}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-amber-500 text-sm">🪙</span>
+                  <span className="text-sm font-semibold text-amber-600">{quest.reward}</span>
+                  {quest.done && !claimed && (
+                    <button
+                      onClick={() => handleClaimQuest(quest)}
+                      className="ml-1 bg-primary text-white text-xs px-2 py-1 rounded-lg font-semibold"
+                    >
+                      Claim
+                    </button>
+                  )}
+                  {claimed && <span className="ml-1 text-green-500 text-xs font-semibold">✓</span>}
                 </div>
               </div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-amber-500 text-sm">🪙</span>
-                <span className="text-sm font-semibold text-amber-600">{quest.reward}</span>
-                {quest.done && !claimedQuests.has(quest.id) && (
-                  <button onClick={() => setClaimedQuests(prev => new Set([...prev, quest.id]))} className="ml-1 bg-primary text-white text-xs px-2 py-1 rounded-lg font-semibold">Claim</button>
-                )}
-                {claimedQuests.has(quest.id) && <span className="ml-1 text-green-500 text-xs font-semibold">✓</span>}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
-      {/* Recent Cards — now with photos */}
+      {/* Recent Cards */}
       {recentChars.length > 0 && (
         <div>
           <div className="flex items-center justify-between mb-3">
-            <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, color: "var(--foreground)" }}>Recent Cards</span>
-            <button onClick={() => onNavigate("collection")} className="text-primary text-sm font-semibold flex items-center gap-1">
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, color: "var(--foreground)" }}>
+              Recent Cards
+            </span>
+            <button
+              onClick={() => onNavigate("collection")}
+              className="text-primary text-sm font-semibold flex items-center gap-1"
+            >
               View all <ChevronRight size={14} />
             </button>
           </div>
@@ -136,17 +205,24 @@ export function Dashboard({ coins, ownedCards, onNavigate }: Props) {
         <div className="px-4 py-3 border-b border-border flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Trophy size={18} className="text-amber-500" />
-            <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, color: "var(--foreground)" }}>Achievements</span>
+            <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, color: "var(--foreground)" }}>
+              Achievements
+            </span>
           </div>
           <span className="text-xs text-muted-foreground">{earnedAchievements.length}/{ACHIEVEMENTS.length}</span>
         </div>
         <div className="flex gap-3 overflow-x-auto p-4">
           {ACHIEVEMENTS.map(ach => (
-            <div key={ach.id} className={`flex-shrink-0 flex flex-col items-center gap-1 w-16 ${!ach.earned ? "opacity-40 grayscale" : ""}`}>
+            <div
+              key={ach.id}
+              className={`flex-shrink-0 flex flex-col items-center gap-1 w-16 ${!ach.earned ? "opacity-40 grayscale" : ""}`}
+            >
               <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${ach.earned ? "bg-amber-50 border-2 border-amber-200" : "bg-muted border-2 border-border"}`}>
                 {ach.icon}
               </div>
-              <p className="text-center text-muted-foreground" style={{ fontSize: "0.6rem", lineHeight: 1.2 }}>{ach.title}</p>
+              <p className="text-center text-muted-foreground" style={{ fontSize: "0.6rem", lineHeight: 1.2 }}>
+                {ach.title}
+              </p>
             </div>
           ))}
         </div>
@@ -157,7 +233,9 @@ export function Dashboard({ coins, ownedCards, onNavigate }: Props) {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-white/80 text-sm">Expedition Returns</p>
-            <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: "1rem" }}>3 cards on mission</p>
+            <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, fontSize: "1rem" }}>
+              3 cards on mission
+            </p>
             <p className="text-white/70 text-xs mt-1">Ready in 2h 15m</p>
           </div>
           <div className="flex flex-col items-center gap-1">
