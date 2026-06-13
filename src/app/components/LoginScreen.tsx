@@ -42,130 +42,170 @@ export function LoginScreen({ onLogin }: Props) {
   }
 
   function handleQuickLogin(name: string) {
-    const key = `studytales_${name}_state`;
     try {
-      const raw = localStorage.getItem(key);
-      const avatar = raw ? "🧙" : "🧙";
-      onLogin({ username: name, avatar, createdAt: Date.now() });
+      onLogin({ username: name, avatar: "🧙", createdAt: Date.now() });
     } catch {
       onLogin({ username: name, avatar: "🧙", createdAt: Date.now() });
     }
   }
 
   return (
-    <div className="min-h-screen w-full flex flex-col items-center justify-start overflow-y-auto"
-      style={{ background: "linear-gradient(135deg, #1e1b4b 0%, #312e81 30%, #4c1d95 60%, #1e1b4b 100%)" }}>
+    <div
+      className="min-h-screen w-full flex flex-col items-center justify-center overflow-y-auto dot-grid-bg"
+      style={{ padding: "24px 16px" }}
+    >
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="w-full"
+        style={{ maxWidth: 400 }}
+      >
 
-      <div className="w-full max-w-sm px-6 py-8 flex flex-col items-center gap-6">
-
-        <motion.div
-          initial={{ opacity: 0, y: -30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
-          className="text-center"
-        >
-          <div className="text-5xl mb-3">✨</div>
-          <h1 className="text-white font-black text-4xl" style={{ fontFamily: "'Outfit', sans-serif", textShadow: "0 0 40px rgba(167,139,250,0.8)" }}>
-            StudyTales
+        {/* ── Title ── */}
+        <div className="text-center mb-5">
+          <h1
+            style={{
+              fontFamily: "'Courier New', monospace",
+              fontSize: "2rem",
+              fontWeight: 900,
+              color: "#1a3d52",
+              letterSpacing: "0.04em",
+              textShadow: "2px 2px 0 rgba(91,154,186,0.3)",
+            }}
+          >
+            ✦ StudyTales
           </h1>
-          <p className="text-purple-200 text-sm mt-1 font-medium">Collect. Battle. Learn.</p>
-        </motion.div>
+          <p style={{ fontFamily: "'Courier New', monospace", fontSize: "0.7rem", color: "#5a7d8a", letterSpacing: "0.1em" }}>
+            COLLECT · BATTLE · LEARN
+          </p>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="flex gap-3 justify-center"
-        >
+        {/* ── Character showcase ── */}
+        <div className="flex gap-3 justify-center mb-5">
           {showcaseChars.map((char, i) => (
             <motion.div
               key={char.id}
-              animate={{ y: [0, -6, 0] }}
-              transition={{ duration: 2.5, delay: i * 0.4, repeat: Infinity, ease: "easeInOut" }}
+              animate={{ y: [0, -5, 0] }}
+              transition={{ duration: 2.5, delay: i * 0.5, repeat: Infinity, ease: "easeInOut" }}
               className="w-20"
-              style={{ filter: "drop-shadow(0 8px 16px rgba(0,0,0,0.5))" }}
+              style={{ filter: "drop-shadow(0 4px 8px rgba(26,61,82,0.2))" }}
             >
               <CardImage character={char} size="sm" showName />
             </motion.div>
           ))}
-        </motion.div>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-          className="w-full bg-white/10 backdrop-blur-sm rounded-3xl p-5 border border-white/20 space-y-4"
-        >
-          <div>
-            <p className="text-white font-bold text-lg" style={{ fontFamily: "'Outfit', sans-serif" }}>
-              Create your profile
-            </p>
-            <p className="text-purple-200 text-xs mt-0.5">Your username is your save file — remember it!</p>
+        {/* ── OS Window: Create profile ── */}
+        <div className="os-window mb-3" style={{ boxShadow: "0 4px 16px rgba(26,61,82,0.12)" }}>
+          <div className="os-titlebar">
+            <div className="os-btn" />
+            <div className="os-btn" />
+            <span className="os-titlebar-title">new_profile.exe</span>
           </div>
 
-          <div>
-            <label className="text-purple-200 text-xs font-semibold mb-1.5 block">SCHOLAR NAME</label>
-            <input
-              type="text"
-              placeholder="e.g. DazaiFan99"
-              value={username}
-              onChange={e => { setUsername(e.target.value); setError(""); }}
-              onKeyDown={e => e.key === "Enter" && handleSubmit()}
-              maxLength={20}
-              className="w-full bg-white/15 border border-white/25 rounded-2xl px-4 py-3 text-white placeholder:text-white/40 font-semibold text-sm outline-none focus:border-purple-400 focus:bg-white/20 transition-all"
-              style={{ fontFamily: "'Outfit', sans-serif" }}
-            />
-            {error && <p className="text-rose-300 text-xs mt-1 font-semibold">{error}</p>}
-          </div>
-
-          <div>
-            <label className="text-purple-200 text-xs font-semibold mb-2 block">CHOOSE AVATAR</label>
-            <div className="grid grid-cols-6 gap-2">
-              {AVATARS.map(av => (
-                <button
-                  key={av}
-                  onClick={() => setSelectedAvatar(av)}
-                  className={`h-10 rounded-xl text-xl transition-all ${selectedAvatar === av ? "bg-purple-500 ring-2 ring-white scale-110" : "bg-white/10 hover:bg-white/20"}`}
-                >
-                  {av}
-                </button>
-              ))}
+          <div className="p-4 space-y-4">
+            <div>
+              <label className="mono-label block mb-1.5">scholar name</label>
+              <input
+                type="text"
+                placeholder="e.g. DazaiFan99"
+                value={username}
+                onChange={e => { setUsername(e.target.value); setError(""); }}
+                onKeyDown={e => e.key === "Enter" && handleSubmit()}
+                maxLength={20}
+                style={{
+                  width: "100%",
+                  background: "#edf6fb",
+                  border: "2px solid #9dc4d8",
+                  borderRadius: 5,
+                  padding: "8px 12px",
+                  fontSize: "0.875rem",
+                  fontFamily: "'Courier New', monospace",
+                  color: "#1a3d52",
+                  outline: "none",
+                }}
+                onFocus={e => (e.target.style.borderColor = "#5b9aba")}
+                onBlur={e => (e.target.style.borderColor = "#9dc4d8")}
+              />
+              {error && (
+                <p style={{ fontFamily: "'Courier New', monospace", fontSize: "0.65rem", color: "#d94040", marginTop: 4, letterSpacing: "0.03em" }}>
+                  ⚠ {error}
+                </p>
+              )}
             </div>
+
+            <div>
+              <label className="mono-label block mb-2">choose avatar</label>
+              <div className="grid grid-cols-6 gap-1.5">
+                {AVATARS.map(av => (
+                  <button
+                    key={av}
+                    onClick={() => setSelectedAvatar(av)}
+                    style={{
+                      height: 38,
+                      border: selectedAvatar === av ? "2px solid #5b9aba" : "2px solid #9dc4d8",
+                      borderRadius: 5,
+                      fontSize: "1.1rem",
+                      background: selectedAvatar === av ? "#c6e2f0" : "#f0f8fc",
+                      transform: selectedAvatar === av ? "scale(1.08)" : "scale(1)",
+                      transition: "all 0.1s",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {av}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <button
+              onClick={handleSubmit}
+              className="w-full retro-btn retro-btn-primary"
+              style={{ padding: "10px 0", fontSize: "0.8rem", borderRadius: 5, letterSpacing: "0.08em" }}
+            >
+              ✦ START LEARNING
+            </button>
           </div>
+        </div>
 
-          <motion.button
-            whileTap={{ scale: 0.97 }}
-            onClick={handleSubmit}
-            className="w-full py-3.5 rounded-2xl font-black text-white text-base shadow-lg"
-            style={{
-              fontFamily: "'Outfit', sans-serif",
-              background: "linear-gradient(135deg, #7c3aed, #a855f7)",
-              boxShadow: "0 4px 20px rgba(124,58,237,0.5)",
-            }}
-          >
-            ✨ Start Learning!
-          </motion.button>
-        </motion.div>
-
+        {/* ── Returning users ── */}
         <AnimatePresence>
           {savedNames.length > 0 && (
             <motion.div
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              className="w-full"
+              className="os-window"
             >
-              <p className="text-purple-300 text-xs font-semibold text-center mb-2">↩ RETURNING SCHOLAR?</p>
-              <div className="flex flex-col gap-2">
+              <div className="os-titlebar">
+                <div className="os-btn" />
+                <div className="os-btn" />
+                <span className="os-titlebar-title">returning_scholar.exe</span>
+              </div>
+              <div className="p-3 space-y-2">
                 {savedNames.map(name => (
                   <button
                     key={name}
                     onClick={() => handleQuickLogin(name)}
-                    className="w-full bg-white/10 hover:bg-white/20 border border-white/20 rounded-2xl px-4 py-3 text-white font-bold text-sm text-left transition-all flex items-center gap-3"
-                    style={{ fontFamily: "'Outfit', sans-serif" }}
+                    className="w-full text-left flex items-center gap-2.5"
+                    style={{
+                      background: "#f0f8fc",
+                      border: "2px solid #9dc4d8",
+                      borderRadius: 5,
+                      padding: "8px 10px",
+                      cursor: "pointer",
+                      transition: "background 0.1s",
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.background = "#ddeef6")}
+                    onMouseLeave={e => (e.currentTarget.style.background = "#f0f8fc")}
                   >
-                    <span className="text-xl">🧙</span>
-                    <span>{name}</span>
-                    <span className="ml-auto text-purple-300 text-xs">Continue →</span>
+                    <span style={{ fontSize: "1.2rem" }}>🧙</span>
+                    <span style={{ fontFamily: "'Courier New', monospace", fontSize: "0.8rem", fontWeight: 700, color: "#1a3d52" }}>
+                      {name}
+                    </span>
+                    <span style={{ fontFamily: "'Courier New', monospace", fontSize: "0.6rem", color: "#5b9aba", marginLeft: "auto", letterSpacing: "0.05em" }}>
+                      CONTINUE →
+                    </span>
                   </button>
                 ))}
               </div>
@@ -173,10 +213,10 @@ export function LoginScreen({ onLogin }: Props) {
           )}
         </AnimatePresence>
 
-        <p className="text-white/30 text-xs text-center pb-4">
-          Data is saved locally on this device.
+        <p style={{ fontFamily: "'Courier New', monospace", fontSize: "0.6rem", color: "#5a7d8a", textAlign: "center", marginTop: 16, letterSpacing: "0.06em" }}>
+          data saved locally on this device
         </p>
-      </div>
+      </motion.div>
     </div>
   );
 }

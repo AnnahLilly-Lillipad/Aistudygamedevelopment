@@ -6,29 +6,29 @@ import type { OwnedCard } from "../data/characters";
 import { CardImage } from "./CardImage";
 
 const DAILY_QUESTS = [
-  { id: 1, title: "Study for 25 minutes",    reward: 50, Icon: Timer,      accent: "#ea580c", bg: "#fff7ed", progress: 25, total: 25, done: true,  tag: "Focus"  },
-  { id: 2, title: "Answer 10 quiz questions", reward: 30, Icon: HelpCircle, accent: "#2563eb", bg: "#eff6ff", progress: 7,  total: 10, done: false, tag: "Quiz"   },
-  { id: 3, title: "Win a battle",             reward: 80, Icon: Swords,     accent: "#e11d48", bg: "#fff1f2", progress: 1,  total: 1,  done: true,  tag: "Battle" },
-  { id: 4, title: "Pull 3 gacha cards",       reward: 20, Icon: Sparkles,   accent: "#7c3aed", bg: "#f5f3ff", progress: 1,  total: 3,  done: false, tag: "Gacha"  },
+  { id: 1, title: "Study for 25 minutes",    reward: 50, Icon: Timer,      accent: "#5b9aba", bg: "#edf6fb", progress: 25, total: 25, done: true,  tag: "Focus"  },
+  { id: 2, title: "Answer 10 quiz questions", reward: 30, Icon: HelpCircle, accent: "#4a8fa8", bg: "#e4f1f8", progress: 7,  total: 10, done: false, tag: "Quiz"   },
+  { id: 3, title: "Win a battle",             reward: 80, Icon: Swords,     accent: "#d94040", bg: "#fef2f2", progress: 1,  total: 1,  done: true,  tag: "Battle" },
+  { id: 4, title: "Pull 3 gacha cards",       reward: 20, Icon: Sparkles,   accent: "#5b9aba", bg: "#ddeef6", progress: 1,  total: 3,  done: false, tag: "Gacha"  },
 ];
 
 const QUICK_ACTIONS = [
-  { label: "Study",   Icon: BookOpen, gradient: "linear-gradient(135deg,#3b82f6,#4f46e5)", tab: "study",  sub: "Earn XP and coins" },
-  { label: "Gacha",   Icon: Sparkles, gradient: "linear-gradient(135deg,#9333ea,#db2777)", tab: "gacha",  sub: "New cards wait"    },
-  { label: "Games",   Icon: Gamepad2, gradient: "linear-gradient(135deg,#10b981,#0d9488)", tab: "games",  sub: "Quiz and flip"     },
-  { label: "Battle",  Icon: Swords,   gradient: "linear-gradient(135deg,#dc2626,#ea580c)", tab: "battle", sub: "Fight for coins"   },
+  { label: "Study",  Icon: BookOpen, color: "#5b9aba", borderColor: "#4a8fa8", tab: "study",  sub: "Earn XP and coins" },
+  { label: "Gacha",  Icon: Sparkles, color: "#7ab3cc", borderColor: "#5b9aba", tab: "gacha",  sub: "New cards wait"    },
+  { label: "Games",  Icon: Gamepad2, color: "#4a8fa8", borderColor: "#3d7a98", tab: "games",  sub: "Quiz and flip"     },
+  { label: "Battle", Icon: Swords,   color: "#d94040", borderColor: "#b83030", tab: "battle", sub: "Fight for coins"   },
 ];
 
 function xpForLevel(lvl: number) { return lvl * 1000; }
 
 function getGreeting() {
   const h = new Date().getHours();
-  if (h < 5)  return "Burning the midnight oil?";
-  if (h < 10) return "Morning, scholar!";
-  if (h < 13) return "Good morning.";
-  if (h < 17) return "Good afternoon.";
-  if (h < 21) return "Good evening.";
-  return "Studying late again?";
+  if (h < 5)  return "burning the midnight oil?";
+  if (h < 10) return "morning, scholar!";
+  if (h < 13) return "good morning.";
+  if (h < 17) return "good afternoon.";
+  if (h < 21) return "good evening.";
+  return "studying late again?";
 }
 
 interface Props {
@@ -65,384 +65,443 @@ export function Dashboard({
   }
 
   return (
-    <div className="pb-8" style={{ background: "var(--background)" }}>
+    <div className="pb-8 px-3 pt-3 space-y-3">
 
-      {/* ── Hero ─────────────────────────────────────────────────────── */}
-      <div
-        className="px-5 pt-10 pb-8"
-        style={{ background: "linear-gradient(160deg, #2e1065 0%, #5b21b6 50%, #7c3aed 100%)" }}
-      >
-        {/* Greeting + coins */}
-        <div className="flex items-center justify-between mb-5">
-          <p className="text-violet-300/75 text-xs font-medium tracking-wide">{getGreeting()}</p>
+      {/* ── Profile window ─────────────────────────────────────── */}
+      <div className="os-window" style={{ boxShadow: "0 2px 8px rgba(26,61,82,0.1)" }}>
+        <div className="os-titlebar">
+          <div className="os-btn" />
+          <div className="os-btn" />
+          <span className="os-titlebar-title">profile.exe — {username}</span>
           <button
             onClick={() => onNavigate("gacha")}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl"
-            style={{ background: "rgba(255,255,255,0.12)" }}
+            style={{
+              fontFamily: "'Courier New', monospace",
+              fontSize: "0.65rem",
+              fontWeight: 700,
+              background: "#fef3c7",
+              color: "#92400e",
+              border: "1px solid #fbbf24",
+              borderRadius: 3,
+              padding: "1px 6px",
+              cursor: "pointer",
+              letterSpacing: "0.03em",
+              flexShrink: 0,
+            }}
           >
-            <Coins size={13} className="text-amber-300" />
-            <span className="text-white font-bold text-sm" style={{ fontFamily: "'Outfit', sans-serif" }}>
-              {coins.toLocaleString()}
-            </span>
+            🪙 {coins.toLocaleString()}
           </button>
         </div>
 
-        {/* Avatar + name */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className="relative flex-shrink-0">
-            <div
-              className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl select-none"
-              style={{ background: "rgba(255,255,255,0.15)", border: "2px solid rgba(251,191,36,0.5)" }}
-            >
-              {avatar}
-            </div>
-            <div
-              className="absolute -bottom-1.5 -right-1.5 rounded-full px-1.5 text-white font-black"
-              style={{ background: "#f59e0b", fontSize: "0.58rem", lineHeight: "1.6", boxShadow: "0 1px 4px rgba(0,0,0,0.3)" }}
-            >
-              Lv.{level}
-            </div>
-          </div>
-          <div>
-            <h2
-              className="text-white font-black leading-none mb-1"
-              style={{ fontFamily: "'Outfit', sans-serif", fontSize: "1.5rem" }}
-            >
-              {username}
-            </h2>
-            <p className="text-violet-200/60 text-xs">
-              {ownedCards.length} cards · {streak} day streak
-            </p>
-          </div>
-        </div>
+        <div className="p-4">
+          <p style={{ fontFamily: "'Courier New', monospace", fontSize: "0.6rem", color: "#5a7d8a", letterSpacing: "0.06em", marginBottom: 10 }}>
+            {getGreeting()}
+          </p>
 
-        {/* XP bar — simple, no shimmer */}
-        <div>
-          <div className="flex justify-between text-xs mb-1.5">
-            <span className="text-violet-200/70 font-semibold">Level {level}</span>
-            <span className="text-violet-200/70">
-              {xpNeeded - xp > 0 ? `${(xpNeeded - xp).toLocaleString()} XP to go` : "Ready to level up!"}
-            </span>
-          </div>
-          <div className="h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.15)" }}>
-            <motion.div
-              className="h-full rounded-full"
-              style={{ background: "linear-gradient(90deg, #fbbf24, #f59e0b)" }}
-              initial={{ width: 0 }}
-              animate={{ width: `${xpProgress}%` }}
-              transition={{ duration: 0.9, ease: "easeOut", delay: 0.2 }}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* ── Stat strip ───────────────────────────────────────────────── */}
-      {/* Sits BELOW hero (no negative margin) so it's never hidden */}
-      <div
-        className="grid grid-cols-3 divide-x"
-        style={{ background: "white", borderBottom: "1px solid rgba(0,0,0,0.06)", divideColor: "rgba(0,0,0,0.06)" }}
-      >
-        {[
-          { value: streak,            label: "Day Streak",  Icon: Flame,  color: "#ea580c" },
-          { value: ownedCards.length, label: "Cards",       Icon: Layers, color: "#7c3aed" },
-          { value: totalBattleWins,   label: "Victories",   Icon: Trophy, color: "#d97706" },
-        ].map(({ value, label, Icon, color }, i) => (
-          <motion.div
-            key={label}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.06, duration: 0.3 }}
-            className="flex flex-col items-center py-4 gap-1"
-            style={{ borderRight: i < 2 ? "1px solid rgba(0,0,0,0.07)" : "none" }}
-          >
-            <Icon size={15} style={{ color }} />
-            <span
-              className="font-black text-2xl leading-none"
-              style={{ fontFamily: "'Outfit', sans-serif", color }}
-            >
-              {value}
-            </span>
-            <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>{label}</span>
-          </motion.div>
-        ))}
-      </div>
-
-      <div className="px-4 pt-6 space-y-7">
-
-        {/* ── Quick actions ────────────────────────────────────────────── */}
-        <section>
-          <h3
-            className="font-black text-lg mb-0.5"
-            style={{ fontFamily: "'Outfit', sans-serif", color: "var(--foreground)" }}
-          >
-            What's the plan?
-          </h3>
-          <p className="text-xs mb-4" style={{ color: "var(--muted-foreground)" }}>Pick something and get started</p>
-
-          <div className="grid grid-cols-2 gap-2.5">
-            {QUICK_ACTIONS.map((action, i) => (
-              <motion.button
-                key={action.label}
-                onClick={() => onNavigate(action.tab)}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.2, delay: i * 0.04 }}
-                className="rounded-2xl p-4 text-left active:scale-[0.97] transition-transform"
-                style={{ background: action.gradient, boxShadow: "0 4px 14px rgba(0,0,0,0.16)" }}
+          {/* Avatar + name */}
+          <div className="flex items-center gap-3 mb-4">
+            <div style={{ position: "relative", flexShrink: 0 }}>
+              <div
+                style={{
+                  width: 52,
+                  height: 52,
+                  border: "2px solid #9dc4d8",
+                  borderRadius: 8,
+                  background: "#edf6fb",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "1.5rem",
+                }}
               >
-                <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center mb-3">
-                  <action.Icon size={17} className="text-white" />
-                </div>
-                <p
-                  className="text-white font-black text-base leading-tight"
-                  style={{ fontFamily: "'Outfit', sans-serif" }}
-                >
-                  {action.label}
-                </p>
-                <p className="text-white/60 text-xs mt-0.5">{action.sub}</p>
-              </motion.button>
-            ))}
-          </div>
-        </section>
-
-        {/* ── Today's missions ─────────────────────────────────────────── */}
-        <section>
-          <div className="flex items-end justify-between mb-4">
+                {avatar}
+              </div>
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: -6,
+                  right: -6,
+                  background: "#5b9aba",
+                  color: "white",
+                  fontFamily: "'Courier New', monospace",
+                  fontSize: "0.55rem",
+                  fontWeight: 700,
+                  padding: "1px 5px",
+                  borderRadius: 3,
+                  border: "1.5px solid #3d7a98",
+                  letterSpacing: "0.03em",
+                }}
+              >
+                Lv.{level}
+              </div>
+            </div>
             <div>
-              <h3
-                className="font-black text-lg mb-0.5"
-                style={{ fontFamily: "'Outfit', sans-serif", color: "var(--foreground)" }}
+              <h2
+                style={{
+                  fontFamily: "'Courier New', monospace",
+                  fontSize: "1.1rem",
+                  fontWeight: 900,
+                  color: "#1a3d52",
+                  letterSpacing: "0.02em",
+                  marginBottom: 2,
+                }}
               >
-                Today's Missions
-              </h3>
-              <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>
-                {DAILY_QUESTS.filter(q => claimedQuests.includes(q.id)).length} of {DAILY_QUESTS.length} done today
+                {username}
+              </h2>
+              <p style={{ fontFamily: "'Courier New', monospace", fontSize: "0.6rem", color: "#5a7d8a", letterSpacing: "0.04em" }}>
+                {ownedCards.length} cards · {streak} day streak
               </p>
             </div>
           </div>
 
-          <div className="space-y-2.5">
-            {DAILY_QUESTS.map(quest => {
-              const claimed = claimedQuests.includes(quest.id);
-              const claimable = quest.done && !claimed;
-              return (
+          {/* XP bar */}
+          <div>
+            <div className="flex justify-between" style={{ marginBottom: 4 }}>
+              <span style={{ fontFamily: "'Courier New', monospace", fontSize: "0.6rem", color: "#5a7d8a", fontWeight: 700 }}>
+                XP / LVL {level}
+              </span>
+              <span style={{ fontFamily: "'Courier New', monospace", fontSize: "0.6rem", color: "#5a7d8a" }}>
+                {xpNeeded - xp > 0 ? `${(xpNeeded - xp).toLocaleString()} to go` : "ready to level up!"}
+              </span>
+            </div>
+            <div style={{ height: 8, background: "#ddeef6", border: "1px solid #9dc4d8", borderRadius: 3, overflow: "hidden" }}>
+              <motion.div
+                style={{ height: "100%", background: "#5b9aba", borderRadius: 2 }}
+                initial={{ width: 0 }}
+                animate={{ width: `${xpProgress}%` }}
+                transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
+              />
+            </div>
+          </div>
+
+          {/* Stats row */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr 1fr",
+              gap: 6,
+              marginTop: 12,
+            }}
+          >
+            {[
+              { value: streak,            label: "streak",    Icon: Flame,  color: "#d97706" },
+              { value: ownedCards.length, label: "cards",     Icon: Layers, color: "#5b9aba" },
+              { value: totalBattleWins,   label: "victories", Icon: Trophy, color: "#4a8fa8" },
+            ].map(({ value, label, Icon, color }) => (
+              <div
+                key={label}
+                style={{
+                  background: "#f0f8fc",
+                  border: "1.5px solid #9dc4d8",
+                  borderRadius: 5,
+                  padding: "8px 4px",
+                  textAlign: "center",
+                }}
+              >
+                <Icon size={13} style={{ color, margin: "0 auto 3px" }} />
+                <div style={{ fontFamily: "'Courier New', monospace", fontSize: "1rem", fontWeight: 900, color, lineHeight: 1 }}>
+                  {value}
+                </div>
+                <div style={{ fontFamily: "'Courier New', monospace", fontSize: "0.5rem", color: "#5a7d8a", letterSpacing: "0.06em", marginTop: 2 }}>
+                  {label.toUpperCase()}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Quick actions window ──────────────────────────────── */}
+      <div className="os-window" style={{ boxShadow: "0 2px 8px rgba(26,61,82,0.1)" }}>
+        <div className="os-titlebar">
+          <div className="os-btn" />
+          <div className="os-btn" />
+          <span className="os-titlebar-title">quick_actions.exe</span>
+        </div>
+        <div className="p-3 grid grid-cols-2 gap-2">
+          {QUICK_ACTIONS.map((action, i) => (
+            <motion.button
+              key={action.label}
+              onClick={() => onNavigate(action.tab)}
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2, delay: i * 0.04 }}
+              style={{
+                background: "#f0f8fc",
+                border: `2px solid ${action.borderColor}`,
+                borderRadius: 5,
+                padding: "10px 8px",
+                textAlign: "left",
+                cursor: "pointer",
+                transition: "background 0.1s",
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = "#ddeef6")}
+              onMouseLeave={e => (e.currentTarget.style.background = "#f0f8fc")}
+            >
+              <div
+                style={{
+                  width: 28,
+                  height: 28,
+                  background: action.color,
+                  borderRadius: 4,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginBottom: 6,
+                }}
+              >
+                <action.Icon size={14} color="white" />
+              </div>
+              <p style={{ fontFamily: "'Courier New', monospace", fontSize: "0.75rem", fontWeight: 900, color: "#1a3d52", letterSpacing: "0.02em" }}>
+                {action.label}
+              </p>
+              <p style={{ fontFamily: "'Courier New', monospace", fontSize: "0.55rem", color: "#5a7d8a", letterSpacing: "0.03em", marginTop: 1 }}>
+                {action.sub}
+              </p>
+            </motion.button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Missions window ───────────────────────────────────── */}
+      <div className="os-window" style={{ boxShadow: "0 2px 8px rgba(26,61,82,0.1)" }}>
+        <div className="os-titlebar">
+          <div className="os-btn" />
+          <div className="os-btn" />
+          <span className="os-titlebar-title">
+            daily_missions.exe — {DAILY_QUESTS.filter(q => claimedQuests.includes(q.id)).length}/{DAILY_QUESTS.length} done
+          </span>
+        </div>
+        <div className="p-3 space-y-2">
+          {DAILY_QUESTS.map(quest => {
+            const claimed = claimedQuests.includes(quest.id);
+            const claimable = quest.done && !claimed;
+            return (
+              <div
+                key={quest.id}
+                style={{
+                  background: claimed ? "#f0f9f4" : "#f8fcfe",
+                  border: `1.5px solid ${claimed ? "#86efac" : "#9dc4d8"}`,
+                  borderRadius: 5,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "8px 10px",
+                }}
+              >
                 <div
-                  key={quest.id}
-                  className="bg-white rounded-2xl overflow-hidden flex"
-                  style={{ boxShadow: "0 1px 8px rgba(0,0,0,0.07)" }}
+                  style={{
+                    width: 30,
+                    height: 30,
+                    background: quest.bg,
+                    border: `1.5px solid ${quest.accent}`,
+                    borderRadius: 4,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                  }}
                 >
-                  {/* Left accent stripe */}
-                  <div
-                    className="w-1 flex-shrink-0"
-                    style={{ background: claimed ? "#d1fae5" : quest.accent }}
-                  />
+                  <quest.Icon size={13} style={{ color: quest.accent }} />
+                </div>
 
-                  <div className="flex-1 flex items-center gap-3 px-3 py-3">
-                    <div
-                      className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                      style={{ background: quest.bg }}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 2 }}>
+                    <span
+                      style={{
+                        fontFamily: "'Courier New', monospace",
+                        fontSize: "0.5rem",
+                        fontWeight: 700,
+                        letterSpacing: "0.06em",
+                        background: quest.bg,
+                        color: quest.accent,
+                        border: `1px solid ${quest.accent}`,
+                        padding: "1px 4px",
+                        borderRadius: 2,
+                      }}
                     >
-                      <quest.Icon size={16} style={{ color: quest.accent }} />
+                      {quest.tag.toUpperCase()}
+                    </span>
+                  </div>
+                  <p style={{ fontFamily: "'Courier New', monospace", fontSize: "0.68rem", fontWeight: 700, color: "#1a3d52", marginBottom: 3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {quest.title}
+                  </p>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <div style={{ flex: 1, height: 4, background: "#ddeef6", border: "1px solid #9dc4d8", borderRadius: 2, overflow: "hidden" }}>
+                      <div
+                        style={{
+                          height: "100%",
+                          width: `${(quest.progress / quest.total) * 100}%`,
+                          background: claimed ? "#10b981" : quest.accent,
+                          borderRadius: 1,
+                        }}
+                      />
                     </div>
-
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5 mb-0.5">
-                        <span
-                          className="font-black rounded px-1.5 py-0.5"
-                          style={{ fontSize: "0.55rem", background: quest.bg, color: quest.accent, letterSpacing: "0.05em" }}
-                        >
-                          {quest.tag.toUpperCase()}
-                        </span>
-                      </div>
-                      <p
-                        className="text-sm font-semibold truncate"
-                        style={{ color: "var(--foreground)" }}
-                      >
-                        {quest.title}
-                      </p>
-                      <div className="flex items-center gap-2 mt-1.5">
-                        <div
-                          className="flex-1 rounded-full overflow-hidden"
-                          style={{ height: 3, background: "var(--muted)" }}
-                        >
-                          <div
-                            className="h-full rounded-full"
-                            style={{
-                              width: `${(quest.progress / quest.total) * 100}%`,
-                              background: claimed ? "#10b981" : quest.accent,
-                            }}
-                          />
-                        </div>
-                        <span className="text-xs shrink-0" style={{ color: "var(--muted-foreground)", fontSize: "0.65rem" }}>
-                          {quest.progress}/{quest.total}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                      <div className="flex items-center gap-1">
-                        <span className="text-xs">🪙</span>
-                        <span className="font-black text-sm" style={{ color: "#d97706", fontFamily: "'Outfit', sans-serif" }}>
-                          {quest.reward}
-                        </span>
-                      </div>
-                      {claimable ? (
-                        <button
-                          onClick={() => handleClaimQuest(quest)}
-                          className="text-white rounded-xl px-3 py-1 font-black active:scale-95 transition-transform"
-                          style={{ background: quest.accent, fontSize: "0.7rem" }}
-                        >
-                          Claim
-                        </button>
-                      ) : claimed ? (
-                        <span className="text-emerald-500 font-black" style={{ fontSize: "0.7rem" }}>✓</span>
-                      ) : null}
-                    </div>
+                    <span style={{ fontFamily: "'Courier New', monospace", fontSize: "0.5rem", color: "#5a7d8a", flexShrink: 0 }}>
+                      {quest.progress}/{quest.total}
+                    </span>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        </section>
 
-        {/* ── Your roster ─────────────────────────────────────────────── */}
-        {recentChars.length > 0 && (
-          <section>
-            <div className="flex items-end justify-between mb-4">
-              <div>
-                <h3
-                  className="font-black text-lg mb-0.5"
-                  style={{ fontFamily: "'Outfit', sans-serif", color: "var(--foreground)" }}
-                >
-                  Your Roster
-                </h3>
-                <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>
-                  {ownedCards.length} card{ownedCards.length !== 1 ? "s" : ""} collected
-                </p>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, flexShrink: 0 }}>
+                  <span style={{ fontFamily: "'Courier New', monospace", fontSize: "0.6rem", fontWeight: 700, color: "#92400e" }}>
+                    🪙{quest.reward}
+                  </span>
+                  {claimable ? (
+                    <button
+                      onClick={() => handleClaimQuest(quest)}
+                      className="retro-btn retro-btn-primary"
+                      style={{ padding: "2px 8px", fontSize: "0.55rem", borderRadius: 3 }}
+                    >
+                      CLAIM
+                    </button>
+                  ) : claimed ? (
+                    <span style={{ fontFamily: "'Courier New', monospace", fontSize: "0.65rem", color: "#10b981", fontWeight: 900 }}>✓ done</span>
+                  ) : null}
+                </div>
               </div>
-              <button
-                onClick={() => onNavigate("collection")}
-                className="flex items-center gap-1 text-xs font-semibold"
-                style={{ color: "var(--primary)" }}
-              >
-                View all <ChevronRight size={12} />
-              </button>
-            </div>
+            );
+          })}
+        </div>
+      </div>
 
-            <div className="flex gap-2.5 overflow-x-auto pb-1 no-scrollbar">
+      {/* ── Roster window ─────────────────────────────────────── */}
+      {recentChars.length > 0 && (
+        <div className="os-window" style={{ boxShadow: "0 2px 8px rgba(26,61,82,0.1)" }}>
+          <div className="os-titlebar">
+            <div className="os-btn" />
+            <div className="os-btn" />
+            <span className="os-titlebar-title">your_roster.exe</span>
+            <button
+              onClick={() => onNavigate("collection")}
+              className="retro-btn"
+              style={{ padding: "1px 8px", fontSize: "0.55rem", borderRadius: 3 }}
+            >
+              VIEW ALL
+            </button>
+          </div>
+          <div className="p-3">
+            <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
               {recentChars.map((char, i) => char && (
                 <motion.div
                   key={i}
-                  initial={{ opacity: 0, x: 8 }}
+                  initial={{ opacity: 0, x: 6 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.2, delay: i * 0.04 }}
-                  className="flex-shrink-0 w-[72px]"
+                  style={{ flexShrink: 0, width: 68 }}
                 >
                   <CardImage character={char} size="xs" showName />
                 </motion.div>
               ))}
               <button
                 onClick={() => onNavigate("collection")}
-                className="flex-shrink-0 w-[72px] rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-1.5"
                 style={{
-                  borderColor: "rgba(124,58,237,0.2)",
+                  flexShrink: 0,
+                  width: 68,
                   minHeight: 80,
-                  background: "rgba(124,58,237,0.03)",
+                  border: "2px dashed #9dc4d8",
+                  borderRadius: 6,
+                  background: "#f0f8fc",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 4,
+                  cursor: "pointer",
                 }}
               >
-                <ArrowRight size={13} style={{ color: "var(--primary)" }} />
-                <span className="font-bold" style={{ color: "var(--primary)", fontSize: "0.5rem", letterSpacing: "0.05em" }}>
+                <ArrowRight size={12} style={{ color: "#5b9aba" }} />
+                <span style={{ fontFamily: "'Courier New', monospace", fontSize: "0.45rem", color: "#5b9aba", fontWeight: 700, letterSpacing: "0.06em" }}>
                   SEE ALL
                 </span>
               </button>
             </div>
-          </section>
-        )}
+          </div>
+        </div>
+      )}
 
-        {/* ── Achievements ────────────────────────────────────────────── */}
-        <section>
-          <div className="flex items-end justify-between mb-4">
-            <div>
-              <h3
-                className="font-black text-lg mb-0.5"
-                style={{ fontFamily: "'Outfit', sans-serif", color: "var(--foreground)" }}
+      {/* ── Achievements window ───────────────────────────────── */}
+      <div className="os-window" style={{ boxShadow: "0 2px 8px rgba(26,61,82,0.1)" }}>
+        <div className="os-titlebar">
+          <div className="os-btn" />
+          <div className="os-btn" />
+          <span className="os-titlebar-title">
+            hall_of_fame.exe — {ACHIEVEMENTS.filter(a => a.earned).length}/{ACHIEVEMENTS.length} earned
+          </span>
+        </div>
+        <div className="p-3">
+          <div className="flex gap-2.5 overflow-x-auto no-scrollbar">
+            {ACHIEVEMENTS.map(ach => (
+              <div
+                key={ach.id}
+                style={{
+                  flexShrink: 0,
+                  width: 50,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 4,
+                  opacity: ach.earned ? 1 : 0.3,
+                }}
               >
-                Hall of Fame
-              </h3>
-              <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>
-                {ACHIEVEMENTS.filter(a => a.earned).length} of {ACHIEVEMENTS.length} earned
-              </p>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl p-4" style={{ boxShadow: "0 1px 8px rgba(0,0,0,0.07)" }}>
-            <div className="flex gap-3 overflow-x-auto no-scrollbar">
-              {ACHIEVEMENTS.map(ach => (
                 <div
-                  key={ach.id}
-                  className="flex-shrink-0 flex flex-col items-center gap-1.5"
-                  style={{ width: 52, opacity: ach.earned ? 1 : 0.3 }}
+                  style={{
+                    width: 44,
+                    height: 44,
+                    border: ach.earned ? "2px solid #fbbf24" : "2px solid #9dc4d8",
+                    borderRadius: 6,
+                    background: ach.earned ? "#fef9c3" : "#f0f8fc",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "1.3rem",
+                  }}
                 >
-                  <div
-                    className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl"
-                    style={{
-                      background: ach.earned ? "#fef3c7" : "var(--muted)",
-                      border: ach.earned ? "2px solid #fbbf24" : "2px solid transparent",
-                    }}
-                  >
-                    {ach.icon}
-                  </div>
-                  <p
-                    className="text-center leading-tight"
-                    style={{ fontSize: "0.52rem", color: "var(--muted-foreground)", fontWeight: 600 }}
-                  >
-                    {ach.title}
-                  </p>
+                  {ach.icon}
                 </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ── Expedition ──────────────────────────────────────────────── */}
-        <section>
-          <div className="mb-4">
-            <h3
-              className="font-black text-lg mb-0.5"
-              style={{ fontFamily: "'Outfit', sans-serif", color: "var(--foreground)" }}
-            >
-              Expeditions
-            </h3>
-            <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>Cards out earning while you study</p>
-          </div>
-
-          <div
-            className="rounded-2xl p-5"
-            style={{ background: "linear-gradient(135deg, #312e81, #4c1d95)" }}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-2 h-2 rounded-full bg-emerald-400" style={{ animation: "pulse 2s infinite" }} />
-                  <span className="text-white/70 text-xs font-semibold">3 cards away</span>
-                </div>
-                <p
-                  className="text-white font-black text-xl mb-2"
-                  style={{ fontFamily: "'Outfit', sans-serif" }}
-                >
-                  Expedition Active
+                <p style={{ fontFamily: "'Courier New', monospace", fontSize: "0.45rem", color: "#5a7d8a", fontWeight: 700, textAlign: "center", letterSpacing: "0.03em", lineHeight: 1.3 }}>
+                  {ach.title}
                 </p>
-                <div className="flex items-center gap-1.5">
-                  <Clock size={13} className="text-amber-300" />
-                  <span className="text-white/70 text-xs font-medium">Returns in 2h 15m</span>
-                </div>
               </div>
-              <Map size={40} className="text-white/15 flex-shrink-0" />
-            </div>
+            ))}
           </div>
-        </section>
-
+        </div>
       </div>
+
+      {/* ── Expedition window ─────────────────────────────────── */}
+      <div className="os-window" style={{ boxShadow: "0 2px 8px rgba(26,61,82,0.1)" }}>
+        <div className="os-titlebar">
+          <div className="os-btn" />
+          <div className="os-btn" />
+          <span className="os-titlebar-title">expedition.exe</span>
+        </div>
+        <div
+          className="p-4"
+          style={{ background: "#edf6fb" }}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#10b981", border: "1px solid #059669" }} />
+                <span style={{ fontFamily: "'Courier New', monospace", fontSize: "0.6rem", color: "#5a7d8a", fontWeight: 700, letterSpacing: "0.04em" }}>
+                  3 cards away
+                </span>
+              </div>
+              <p style={{ fontFamily: "'Courier New', monospace", fontSize: "0.9rem", fontWeight: 900, color: "#1a3d52", letterSpacing: "0.02em", marginBottom: 6 }}>
+                Expedition Active
+              </p>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <Clock size={11} style={{ color: "#5b9aba" }} />
+                <span style={{ fontFamily: "'Courier New', monospace", fontSize: "0.6rem", color: "#5a7d8a", fontWeight: 700 }}>
+                  returns in 2h 15m
+                </span>
+              </div>
+            </div>
+            <Map size={36} style={{ color: "#9dc4d8", flexShrink: 0 }} />
+          </div>
+        </div>
+      </div>
+
     </div>
   );
 }

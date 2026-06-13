@@ -15,14 +15,14 @@ import { useGameState } from "./hooks/useGameState";
 type Tab = "home" | "study" | "games" | "gacha" | "collection" | "battle" | "chat" | "profile";
 
 const NAV_ITEMS: { id: Tab; label: string; icon: React.ReactNode }[] = [
-  { id: "home",       label: "Home",    icon: <Home size={19} /> },
-  { id: "study",      label: "Study",   icon: <BookOpen size={19} /> },
-  { id: "games",      label: "Games",   icon: <Gamepad2 size={19} /> },
-  { id: "gacha",      label: "Gacha",   icon: <Sparkles size={19} /> },
-  { id: "collection", label: "Cards",   icon: <Library size={19} /> },
-  { id: "battle",     label: "Battle",  icon: <Sword size={19} /> },
-  { id: "chat",       label: "Chat",    icon: <MessageCircle size={19} /> },
-  { id: "profile",    label: "Profile", icon: <User size={19} /> },
+  { id: "home",       label: "Home",    icon: <Home size={16} /> },
+  { id: "study",      label: "Study",   icon: <BookOpen size={16} /> },
+  { id: "games",      label: "Games",   icon: <Gamepad2 size={16} /> },
+  { id: "gacha",      label: "Gacha",   icon: <Sparkles size={16} /> },
+  { id: "collection", label: "Cards",   icon: <Library size={16} /> },
+  { id: "battle",     label: "Battle",  icon: <Sword size={16} /> },
+  { id: "chat",       label: "Chat",    icon: <MessageCircle size={16} /> },
+  { id: "profile",    label: "Profile", icon: <User size={16} /> },
 ];
 
 interface ToastNotif { id: string; message: string; coins?: number; }
@@ -134,17 +134,17 @@ export default function App() {
 
   return (
     <div
-      className="size-full flex flex-col overflow-hidden"
-      style={{ fontFamily: "'Inter', 'Nunito', sans-serif", maxWidth: 480, margin: "0 auto", background: "var(--background)" }}
+      className="size-full flex flex-col overflow-hidden dot-grid-bg"
+      style={{ maxWidth: 480, margin: "0 auto" }}
     >
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
+            exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.15, ease: "easeOut" }}
             className="min-h-full"
           >
@@ -153,15 +153,13 @@ export default function App() {
         </AnimatePresence>
       </div>
 
-      {/* ── Premium nav bar ───────────────────────────────── */}
+      {/* ── Retro nav bar ─────────────────────────────────────── */}
       <nav
         className="flex-shrink-0 safe-bottom"
         style={{
-          background: "rgba(255,255,255,0.95)",
-          backdropFilter: "blur(20px)",
-          WebkitBackdropFilter: "blur(20px)",
-          borderTop: "1px solid rgba(124,58,237,0.1)",
-          boxShadow: "0 -4px 24px rgba(124,58,237,0.07), 0 -1px 0 rgba(124,58,237,0.06)",
+          background: "linear-gradient(180deg, #c8dfe9 0%, #b8d2e0 100%)",
+          borderTop: "2px solid #9dc4d8",
+          boxShadow: "0 -1px 0 rgba(255,255,255,0.5) inset",
         }}
       >
         <div className="flex">
@@ -172,46 +170,56 @@ export default function App() {
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
                 className="flex-1 flex flex-col items-center py-2 gap-0.5 relative"
-                style={{ WebkitTapHighlightColor: "transparent" }}
+                style={{
+                  WebkitTapHighlightColor: "transparent",
+                  background: active ? "rgba(255,255,255,0.45)" : "transparent",
+                  borderRight: "1px solid rgba(157,196,216,0.5)",
+                  transition: "background 0.1s",
+                }}
               >
-                {/* Top active indicator */}
+                {/* Active top border */}
                 {active && (
-                  <motion.div
-                    layoutId="nav-indicator"
-                    className="absolute top-0 left-1/2 -translate-x-1/2 h-0.5 w-5 rounded-b-full"
-                    style={{ background: "var(--primary)" }}
-                    transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: 2,
+                      background: "#5b9aba",
+                    }}
                   />
                 )}
 
-                {/* Icon container */}
-                <div
-                  className="relative flex items-center justify-center w-8 h-8 rounded-xl transition-all duration-200"
-                  style={{
-                    background: active ? "rgba(124,58,237,0.1)" : "transparent",
-                  }}
-                >
-                  <div style={{ color: active ? "var(--primary)" : "#9ca3af", transition: "color 0.2s" }}>
-                    {item.icon}
-                  </div>
-                  {/* Gacha notification dot */}
-                  {item.id === "gacha" && (
-                    <span
-                      className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full ring-2 ring-white"
-                      style={{ background: "#ef4444" }}
-                    />
-                  )}
+                <div style={{ color: active ? "#1a3d52" : "#5a7d8a" }}>
+                  {item.icon}
                 </div>
 
-                {/* Label */}
+                {/* Gacha notification dot */}
+                {item.id === "gacha" && (
+                  <span
+                    style={{
+                      position: "absolute",
+                      top: 4,
+                      right: "20%",
+                      width: 6,
+                      height: 6,
+                      borderRadius: "50%",
+                      background: "#d94040",
+                      border: "1px solid white",
+                    }}
+                  />
+                )}
+
                 <span
-                  className="leading-none font-semibold"
                   style={{
-                    fontSize: "0.52rem",
-                    letterSpacing: "0.04em",
-                    color: active ? "var(--primary)" : "#9ca3af",
-                    transition: "color 0.2s",
+                    fontFamily: "'Courier New', monospace",
+                    fontSize: "0.48rem",
+                    letterSpacing: "0.06em",
                     textTransform: "uppercase",
+                    fontWeight: 700,
+                    color: active ? "#1a3d52" : "#5a7d8a",
+                    lineHeight: 1,
                   }}
                 >
                   {item.label}
@@ -222,36 +230,47 @@ export default function App() {
         </div>
       </nav>
 
-      {/* ── Toast notifications ───────────────────────────── */}
+      {/* ── Toast notifications ──────────────────────────────── */}
       <div
         className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2 pointer-events-none"
-        style={{ maxWidth: 340, width: "90%" }}
+        style={{ maxWidth: 320, width: "90%" }}
       >
         <AnimatePresence>
           {toasts.map(toast => (
             <motion.div
               key={toast.id}
-              initial={{ opacity: 0, y: -16, scale: 0.92 }}
+              initial={{ opacity: 0, y: -12, scale: 0.94 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -16, scale: 0.92, transition: { duration: 0.2 } }}
-              transition={{ type: "spring", stiffness: 400, damping: 28 }}
-              className="flex items-center gap-2.5 rounded-2xl px-4 py-3"
-              style={{
-                background: "rgba(255,255,255,0.97)",
-                boxShadow: "0 8px 32px rgba(124,58,237,0.18), 0 2px 8px rgba(0,0,0,0.08)",
-                backdropFilter: "blur(12px)",
-                border: "1px solid rgba(124,58,237,0.1)",
-              }}
+              exit={{ opacity: 0, y: -12, scale: 0.94, transition: { duration: 0.18 } }}
+              transition={{ type: "spring", stiffness: 380, damping: 30 }}
+              className="os-window flex items-center gap-2.5 px-3 py-2"
+              style={{ boxShadow: "0 4px 16px rgba(26,61,82,0.18)" }}
             >
               {toast.coins !== undefined && (
                 <span
-                  className="font-black text-sm shrink-0 px-2 py-0.5 rounded-lg"
-                  style={{ background: "rgba(251,191,36,0.15)", color: "#d97706" }}
+                  style={{
+                    fontFamily: "'Courier New', monospace",
+                    fontSize: "0.7rem",
+                    fontWeight: 700,
+                    background: "#fef3c7",
+                    color: "#92400e",
+                    padding: "2px 6px",
+                    borderRadius: 3,
+                    border: "1px solid #fbbf24",
+                    flexShrink: 0,
+                  }}
                 >
                   🪙 +{toast.coins}
                 </span>
               )}
-              <span className="text-sm font-semibold" style={{ color: "var(--foreground)" }}>
+              <span
+                style={{
+                  fontFamily: "'Courier New', monospace",
+                  fontSize: "0.72rem",
+                  fontWeight: 700,
+                  color: "#1a3d52",
+                }}
+              >
                 {toast.message}
               </span>
             </motion.div>
