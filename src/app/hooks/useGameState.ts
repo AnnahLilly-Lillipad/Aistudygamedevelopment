@@ -33,6 +33,7 @@ export interface GameState {
   unlockedBuffIds: number[];
 }
 
+// give the player some cards to start with so battle isn't empty
 const STARTER_CARDS: OwnedCard[] = [
   { characterId: 1,  id: "init-1",  level: 15, limitBreak: 0, awakened: false, obtainedAt: new Date() },
   { characterId: 2,  id: "init-2",  level: 8,  limitBreak: 0, awakened: false, obtainedAt: new Date() },
@@ -41,11 +42,12 @@ const STARTER_CARDS: OwnedCard[] = [
   { characterId: 11, id: "init-11", level: 20, limitBreak: 2, awakened: false, obtainedAt: new Date() },
 ];
 
-function todayStr(): string {
+// just today's date as YYYY-MM-DD
+function todayStr() {
   return new Date().toISOString().slice(0, 10);
 }
 
-function xpToNextLevel(level: number): number {
+function xpToNextLevel(level: number) {
   return level * 1000;
 }
 
@@ -73,10 +75,12 @@ function makeInitialState(): GameState {
   };
 }
 
+// dates get serialized as strings in localStorage — fix them back
 function hydrateCards(raw: OwnedCard[]): OwnedCard[] {
   return raw.map(c => ({ ...c, obtainedAt: new Date(c.obtainedAt) }));
 }
 
+// if the stats are from a different day, reset them
 function ensureDailyStats(stats: DailyStats | undefined): DailyStats {
   if (!stats || stats.date !== todayStr()) return freshDailyStats();
   return stats;
@@ -86,21 +90,30 @@ function loadUser(): UserProfile | null {
   try {
     const raw = localStorage.getItem("studytales_user");
     return raw ? (JSON.parse(raw) as UserProfile) : null;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 function loadGameState(username: string): GameState {
   try {
     const raw = localStorage.getItem(`studytales_${username}_state`);
     if (!raw) return makeInitialState();
+
     const parsed = JSON.parse(raw) as GameState;
     parsed.ownedCards = hydrateCards(parsed.ownedCards);
-    if (!parsed.ownedFrames) parsed.ownedFrames = ["standard"];
-    if (!parsed.equippedFrame) parsed.equippedFrame = "standard";
+
+    // patch fields that didn't exist in old saves
+    if (!parsed.ownedFrames)    parsed.ownedFrames    = ["standard"];
+    if (!parsed.equippedFrame)  parsed.equippedFrame  = "standard";
     if (!parsed.unlockedBuffIds) parsed.unlockedBuffIds = [1, 2];
+
     parsed.dailyStats = ensureDailyStats(parsed.dailyStats);
+
     return parsed;
-  } catch { return makeInitialState(); }
+  } catch {
+    return makeInitialState();
+  }
 }
 
 export function useGameState() {
@@ -110,12 +123,15 @@ export function useGameState() {
     return u ? loadGameState(u.username) : makeInitialState();
   });
 
+  // persist everything on every state change
   useEffect(() => {
     if (!user) return;
     try {
       localStorage.setItem("studytales_user", JSON.stringify(user));
       localStorage.setItem(`studytales_${user.username}_state`, JSON.stringify(state));
-    } catch {}
+    } catch {
+      // storage full or private mode — just silently skip
+    }
   }, [user, state]);
 
   const login = useCallback((profile: UserProfile) => {
@@ -135,18 +151,23 @@ export function useGameState() {
     setState(prev => {
       const today = todayStr();
       if (prev.lastActivityDate === today) return prev;
+
+      // check if yesterday so we can keep the streak going
       const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
       const newStreak = prev.lastActivityDate === yesterday ? prev.streak + 1 : 1;
+
       return { ...prev, lastActivityDate: today, streak: newStreak };
     });
   }, []);
 
+  // coins also give a bit of xp as a bonus
   const earnCoins = useCallback((amount: number) => {
     setState(prev => {
       const xpGain = Math.ceil(amount / 5);
       const newXp = prev.xp + xpGain;
       const needed = xpToNextLevel(prev.level);
       const leveled = newXp >= needed;
+
       return {
         ...prev,
         coins: prev.coins + amount,
@@ -170,19 +191,23 @@ export function useGameState() {
     updateActivity();
   }, [updateActivity]);
 
+  // merges duplicates into limit breaks instead of stacking owned cards
   const gainCards = useCallback((cards: OwnedCard[]) => {
     setState(prev => {
       const merged = new Map<number, OwnedCard>(prev.ownedCards.map(c => [c.characterId, c]));
+
       cards.forEach(card => {
         if (merged.has(card.characterId)) {
-          const ex = merged.get(card.characterId)!;
-          merged.set(card.characterId, { ...ex, limitBreak: Math.min(ex.limitBreak + 1, 5) });
+          const existing = merged.get(card.characterId)!;
+          merged.set(card.characterId, { ...existing, limitBreak: Math.min(existing.limitBreak + 1, 5) });
         } else {
           merged.set(card.characterId, { ...card, awakened: false });
         }
       });
+
       const today = todayStr();
       const ds = prev.dailyStats.date === today ? prev.dailyStats : freshDailyStats();
+
       return {
         ...prev,
         ownedCards: Array.from(merged.values()),
@@ -224,6 +249,7 @@ export function useGameState() {
   const claimQuest = useCallback((questId: number) => {
     setState(prev => {
       const today = todayStr();
+      // reset claimed list if it's a new day
       const baseClaimed = prev.lastQuestReset === today ? prev.claimedQuests : [];
       return { ...prev, claimedQuests: [...baseClaimed, questId], lastQuestReset: today };
     });
@@ -251,11 +277,12 @@ export function useGameState() {
     });
   }, []);
 
+  // returns false if not enough coins or already owned
   const buyFrame = useCallback((frameId: string, price: number): boolean => {
-    let success = false;
+    let ok = false;
     setState(prev => {
       if (prev.coins < price || prev.ownedFrames.includes(frameId)) return prev;
-      success = true;
+      ok = true;
       return {
         ...prev,
         coins: prev.coins - price,
@@ -263,25 +290,26 @@ export function useGameState() {
         equippedFrame: frameId,
       };
     });
-    return success;
+    return ok;
   }, []);
 
   const equipFrame = useCallback((frameId: string) => {
     setState(prev => ({ ...prev, equippedFrame: frameId }));
   }, []);
 
+  // same pattern as buyFrame — returns bool so caller knows if it worked
   const unlockBuff = useCallback((buffId: number, cost: number): boolean => {
-    let success = false;
+    let ok = false;
     setState(prev => {
       if (prev.coins < cost || prev.unlockedBuffIds.includes(buffId)) return prev;
-      success = true;
+      ok = true;
       return {
         ...prev,
         coins: prev.coins - cost,
         unlockedBuffIds: [...prev.unlockedBuffIds, buffId],
       };
     });
-    return success;
+    return ok;
   }, []);
 
   return {
