@@ -215,7 +215,7 @@ export function BattleMode({ ownedCards, onEarnCoins }: Props) {
 
         <button
           onClick={() => startBattle()}
-          disabled={playerTeam.length === 0 && ownedChars.length > 0}
+          disabled={playerTeam.length === 0}
           className="w-full py-4 rounded-2xl bg-gradient-to-r from-red-500 to-orange-500 text-white font-bold text-lg shadow-md disabled:opacity-50"
           style={{ fontFamily: "'Outfit', sans-serif" }}
         >

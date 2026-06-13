@@ -38,6 +38,10 @@ interface Props {
 
 export function ProfilePage({ coins, ownedCards }: Props) {
   const [activeTab, setActiveTab] = useState<"overview" | "achievements" | "buffs" | "leaderboard" | "legal">("overview");
+  const [leaderboardFilter, setLeaderboardFilter] = useState<"Global" | "Friends" | "Weekly">("Global");
+  const [collectedExpeditions, setCollectedExpeditions] = useState<Set<number>>(new Set());
+  const [buffFeedback, setBuffFeedback] = useState<number | null>(null);
+  const [expeditionMsg, setExpeditionMsg] = useState<string | null>(null);
 
   const ownedCount = new Set(ownedCards.map(c => c.characterId)).size;
   const urCount = ownedCards.filter(oc => CHARACTERS.find(c => c.id === oc.characterId)?.rarity === "UR").length;
@@ -150,8 +154,16 @@ export function ProfilePage({ coins, ownedCards }: Props) {
             <div className="bg-white rounded-2xl border border-border p-4 shadow-sm">
               <div className="flex items-center justify-between mb-3">
                 <p style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, color: "var(--foreground)" }}>🗺️ Expeditions</p>
-                <button className="text-xs text-primary font-semibold">Manage</button>
+                <button
+                  className="text-xs text-primary font-semibold"
+                  onClick={() => setExpeditionMsg(expeditionMsg ? null : "Expedition management coming soon!")}
+                >
+                  Manage
+                </button>
               </div>
+              {expeditionMsg && (
+                <div className="bg-primary/10 text-primary text-xs font-semibold rounded-xl px-3 py-2 mb-2">{expeditionMsg}</div>
+              )}
               <div className="space-y-2">
                 {[
                   { name: "Yokohama Night Patrol", chars: ["🪄", "⚔️"], duration: "2h 15m", ready: false },
@@ -165,8 +177,15 @@ export function ProfilePage({ coins, ownedCards }: Props) {
                       </div>
                     </div>
                     <div className="text-right">
-                      {exp.ready ? (
-                        <button className="bg-green-500 text-white text-xs font-bold px-3 py-1.5 rounded-xl">Collect</button>
+                      {exp.ready && !collectedExpeditions.has(i) ? (
+                        <button
+                          className="bg-green-500 text-white text-xs font-bold px-3 py-1.5 rounded-xl"
+                          onClick={() => setCollectedExpeditions(prev => new Set([...prev, i]))}
+                        >
+                          Collect
+                        </button>
+                      ) : exp.ready && collectedExpeditions.has(i) ? (
+                        <span className="text-xs text-green-600 font-semibold">✓ Collected</span>
                       ) : (
                         <span className="text-xs text-muted-foreground">⏰ {exp.duration}</span>
                       )}
@@ -220,9 +239,15 @@ export function ProfilePage({ coins, ownedCards }: Props) {
                     <div className="flex items-center gap-1 mt-2">
                       <span className="text-xs text-rose-500 font-semibold">💎 {buff.cost}</span>
                     </div>
+                    {buffFeedback === buff.id && (
+                      <p className="text-xs text-amber-600 font-semibold mt-1">Not enough Rare Drops. Pull SSR+ cards to earn them!</p>
+                    )}
                   </div>
                   {!buff.unlocked && (
-                    <button className="ml-3 bg-primary text-white text-xs font-bold px-3 py-2 rounded-xl">
+                    <button
+                      className="ml-3 bg-primary text-white text-xs font-bold px-3 py-2 rounded-xl"
+                      onClick={() => setBuffFeedback(buffFeedback === buff.id ? null : buff.id)}
+                    >
                       Unlock
                     </button>
                   )}
@@ -280,12 +305,21 @@ export function ProfilePage({ coins, ownedCards }: Props) {
         {activeTab === "leaderboard" && (
           <div className="p-4 space-y-2">
             <div className="flex gap-2 mb-4">
-              {["Global", "Friends", "Weekly"].map(t => (
-                <button key={t} className={`px-3 py-1.5 rounded-xl text-xs font-semibold ${t === "Global" ? "bg-primary text-white" : "bg-white border border-border text-muted-foreground"}`}>
+              {(["Global", "Friends", "Weekly"] as const).map(t => (
+                <button
+                  key={t}
+                  onClick={() => setLeaderboardFilter(t)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${leaderboardFilter === t ? "bg-primary text-white" : "bg-white border border-border text-muted-foreground"}`}
+                >
                   {t}
                 </button>
               ))}
             </div>
+            {leaderboardFilter !== "Global" && (
+              <div className="bg-secondary rounded-2xl p-4 text-center text-sm text-muted-foreground mb-2">
+                {leaderboardFilter === "Friends" ? "Add friends to see their rankings here!" : "Weekly rankings reset every Monday."}
+              </div>
+            )}
             {LEADERBOARD.map(entry => (
               <div key={entry.rank} className={`rounded-2xl p-4 flex items-center gap-3 ${entry.isUser ? "bg-primary/10 border-2 border-primary" : "bg-white border border-border"} shadow-sm`}>
                 <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-sm flex-shrink-0 ${entry.rank <= 3 ? "bg-amber-400 text-white" : "bg-muted text-muted-foreground"}`}>

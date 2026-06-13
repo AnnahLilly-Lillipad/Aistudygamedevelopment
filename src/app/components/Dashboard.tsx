@@ -162,7 +162,13 @@ export function Dashboard({ coins, ownedCards, onNavigate }: Props) {
           </div>
           <div className="flex flex-col items-center gap-1">
             <span className="text-4xl">🗺️</span>
-            <button className="bg-white text-indigo-700 text-xs font-bold px-3 py-1 rounded-lg">Collect</button>
+            <button
+              disabled
+              className="bg-white/40 text-white/60 text-xs font-bold px-3 py-1 rounded-lg cursor-not-allowed"
+              title="Expedition not ready yet"
+            >
+              ⏰ 2h 15m
+            </button>
           </div>
         </div>
       </div>
