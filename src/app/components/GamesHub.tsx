@@ -132,13 +132,13 @@ function makeQuizFromCards(cards: FlashCard[]): QuizQuestion[] {
 // ─── Games List ───────────────────────────────────────────────────────────────
 
 const GAMES = [
-  { id: "quiz",       name: "Quiz Battle",        description: "Answer questions to earn coins", Icon: HelpCircle, color: "from-blue-500 to-indigo-600",  available: true  },
-  { id: "flashcard",  name: "Flashcard Flip",      description: "Flip cards to memorize",        Icon: Layers,     color: "from-purple-500 to-violet-600", available: true  },
-  { id: "memory",     name: "Memory Match",        description: "Find matching pairs",            Icon: Brain,      color: "from-green-500 to-emerald-600", available: false },
-  { id: "fillblank",  name: "Fill the Blank",      description: "Complete story sentences",       Icon: PenLine,    color: "from-orange-500 to-amber-500",  available: false },
-  { id: "falling",    name: "Falling Terms",       description: "Catch the right answers",        Icon: MoveDown,   color: "from-pink-500 to-rose-500",     available: false },
-  { id: "boss",       name: "Boss Battle Exam",    description: "Fight the Boss with knowledge",  Icon: Skull,      color: "from-red-600 to-orange-600",    available: false },
-  { id: "spaced",     name: "Spaced Repetition",   description: "Smart review scheduling",        Icon: RefreshCw,  color: "from-teal-500 to-cyan-500",     available: false },
+  { id: "quiz",       name: "Quiz Battle",        description: "Answer Qs, earn coins",   Icon: HelpCircle, color: "from-blue-500 to-indigo-600",  available: true,  tag: "KNOWLEDGE", badge: "HOT" },
+  { id: "flashcard",  name: "Flashcard Flip",      description: "Flip & memorize",         Icon: Layers,     color: "from-purple-500 to-violet-600", available: true,  tag: "MEMORY",    badge: null  },
+  { id: "memory",     name: "Memory Match",        description: "Find matching pairs",     Icon: Brain,      color: "from-green-500 to-emerald-600", available: false, tag: "BRAIN",     badge: "SOON" },
+  { id: "fillblank",  name: "Fill the Blank",      description: "Complete the sentence",   Icon: PenLine,    color: "from-orange-500 to-amber-500",  available: false, tag: "WRITING",   badge: "SOON" },
+  { id: "falling",    name: "Falling Terms",       description: "Catch right answers",     Icon: MoveDown,   color: "from-pink-500 to-rose-500",     available: false, tag: "REFLEX",    badge: "SOON" },
+  { id: "boss",       name: "Boss Battle Exam",    description: "Fight with knowledge",    Icon: Skull,      color: "from-red-600 to-orange-600",    available: false, tag: "EPIC",      badge: "SOON" },
+  { id: "spaced",     name: "Spaced Repetition",   description: "Smart review scheduling", Icon: RefreshCw,  color: "from-teal-500 to-cyan-500",     available: false, tag: "SMART",     badge: "SOON" },
 ];
 
 // ─── Quiz Game ────────────────────────────────────────────────────────────────
@@ -518,21 +518,30 @@ export function GamesHub({ onEarnCoins }: Props) {
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-2xl mx-auto pb-6">
       {/* Page header */}
       <div
-        className="relative px-5 pt-9 pb-6 overflow-hidden"
-        style={{ background: "linear-gradient(135deg, #064e3b 0%, #065f46 45%, #047857 100%)" }}
+        className="relative px-5 pt-10 pb-8 overflow-hidden"
+        style={{ background: "linear-gradient(150deg, #052e16 0%, #064e3b 40%, #065f46 75%, #047857 100%)" }}
       >
-        <div className="absolute -right-10 -top-10 w-48 h-48 rounded-full" style={{ background: "rgba(255,255,255,0.05)" }} />
-        <div className="absolute right-6 bottom-2 w-20 h-20 rounded-full" style={{ background: "rgba(255,255,255,0.04)" }} />
+        {/* Dot-grid texture */}
+        <div className="absolute inset-0 pointer-events-none" style={{
+          backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.2) 1px, transparent 1px)",
+          backgroundSize: "20px 20px",
+          opacity: 0.3,
+        }} />
+        <div className="absolute -right-10 -top-10 w-48 h-48 rounded-full pointer-events-none" style={{ background: "rgba(255,255,255,0.05)" }} />
         <div className="relative">
-          <div className="flex items-center gap-2 mb-1">
-            <Gamepad2 size={15} className="text-emerald-300" />
-            <p className="text-emerald-300 text-xs font-bold tracking-widest uppercase">Games</p>
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-6 h-6 rounded-lg bg-emerald-400/25 flex items-center justify-center">
+              <Gamepad2 size={13} className="text-emerald-300" />
+            </div>
+            <p className="text-emerald-300/80 text-xs font-bold tracking-widest uppercase">Game Room</p>
           </div>
-          <h1 className="text-white font-black text-3xl" style={{ fontFamily: "'Outfit', sans-serif" }}>Study Games</h1>
-          <p className="text-white/60 text-sm mt-1">Choose a game, pick what to study, earn coins</p>
+          <h1 className="text-white font-black leading-tight" style={{ fontFamily: "'Outfit', sans-serif", fontSize: "2rem" }}>
+            Pick a game.
+          </h1>
+          <p className="text-emerald-200/60 text-sm mt-0.5 font-medium">All of them earn coins — no excuses.</p>
         </div>
       </div>
 
@@ -545,29 +554,57 @@ export function GamesHub({ onEarnCoins }: Props) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.25, delay: i * 0.04 }}
             onClick={() => game.available ? setPendingGame(game.id) : undefined}
-            className={`relative overflow-hidden rounded-2xl p-4 text-left transition-transform ${game.available ? "active:scale-95" : "opacity-60 cursor-default"}`}
-            style={{ background: `linear-gradient(135deg, var(--tw-gradient-from), var(--tw-gradient-to))`, boxShadow: game.available ? "0 4px 16px rgba(0,0,0,0.14)" : "none" }}
+            className={`relative overflow-hidden rounded-2xl p-4 text-left transition-transform ${game.available ? "active:scale-[0.97]" : "cursor-default"}`}
+            style={{
+              boxShadow: game.available ? "0 6px 20px rgba(0,0,0,0.18)" : "0 2px 8px rgba(0,0,0,0.06)",
+              opacity: game.available ? 1 : 0.55,
+            }}
           >
-            <div className={`w-full h-full absolute inset-0 bg-gradient-to-br ${game.color} opacity-100 rounded-2xl`} />
+            {/* Gradient background */}
+            <div className={`absolute inset-0 bg-gradient-to-br ${game.color} rounded-2xl`} />
+
             <div className="relative">
-              <div className="absolute -right-2 -top-1 opacity-15">
-                <game.Icon size={52} className="text-white" />
+              {/* Category tag + badge row */}
+              <div className="flex items-center justify-between mb-2.5">
+                <span
+                  className="text-white/75 font-black tracking-widest"
+                  style={{ fontSize: "0.52rem", letterSpacing: "0.1em" }}
+                >
+                  {game.tag}
+                </span>
+                {game.badge === "HOT" && (
+                  <span
+                    className="text-white font-black rounded-md px-1.5 py-0.5"
+                    style={{ fontSize: "0.5rem", letterSpacing: "0.05em", background: "rgba(255,255,255,0.25)" }}
+                  >
+                    🔥 HOT
+                  </span>
+                )}
               </div>
-              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center mb-2.5">
+
+              {/* Icon */}
+              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center mb-2.5 relative">
                 <game.Icon size={20} className="text-white" />
+                {/* Big faded bg icon */}
+                <div className="absolute -right-3 -bottom-5 pointer-events-none opacity-10">
+                  <game.Icon size={56} className="text-white" />
+                </div>
               </div>
-              <p className="text-white font-black text-sm leading-tight" style={{ fontFamily: "'Outfit', sans-serif" }}>{game.name}</p>
-              <p className="text-white/70 text-xs mt-0.5">{game.description}</p>
-              {!game.available && (
-                <div className="mt-2 inline-block rounded-lg px-2 py-0.5 bg-white/20">
-                  <span className="text-white text-xs font-bold">Coming Soon</span>
-                </div>
-              )}
-              {game.available && (
-                <div className="mt-2 inline-block rounded-lg px-2 py-0.5 bg-white/25">
-                  <span className="text-white text-xs font-bold">Play Now</span>
-                </div>
-              )}
+
+              <p className="text-white font-black text-sm leading-tight" style={{ fontFamily: "'Outfit', sans-serif" }}>
+                {game.name}
+              </p>
+              <p className="text-white/65 text-xs mt-0.5 font-medium">{game.description}</p>
+
+              {/* Footer pill */}
+              <div
+                className="mt-2.5 inline-block rounded-lg px-2 py-0.5"
+                style={{ background: game.available ? "rgba(255,255,255,0.22)" : "rgba(0,0,0,0.15)" }}
+              >
+                <span className="text-white text-xs font-bold" style={{ fontSize: "0.6rem" }}>
+                  {game.available ? "▶ Play Now" : "Coming Soon"}
+                </span>
+              </div>
             </div>
           </motion.button>
         ))}
